@@ -1,5 +1,13 @@
-export type StarShape = 'dot' | 'four' | 'six' | 'orb';
-export type MemoryStarData = { id: number; name: string; date: string; x: number; y: number; size: number; shape: StarShape; tone: 'cream' | 'peach' | 'rose'; favorite?: boolean; depth?: number; photoCount?: number; created?: boolean };
+export type ActivityTag = '낮잠' | '창가 구경' | '놀이' | '산책·외출' | '식사·간식' | '함께한 일상' | '특별한 날';
+export type StarShape = 'dot' | 'four' | 'six' | 'orb' | 'comet' | 'flower' | 'crystal';
+export type StarTone = 'cream' | 'blue' | 'peach' | 'lavender' | 'gold' | 'white' | 'rose';
+export type MemoryStarData = { id: number; name: string; date: string; x: number; y: number; size: number; shape: StarShape; tone: StarTone; activity?: ActivityTag; favorite?: boolean; depth?: number; photoCount?: number; created?: boolean };
+export const activityStyles: Record<ActivityTag, { shape: StarShape; tone: StarTone }> = {
+  '낮잠': { shape: 'orb', tone: 'cream' }, '창가 구경': { shape: 'four', tone: 'blue' }, '놀이': { shape: 'six', tone: 'peach' },
+  '산책·외출': { shape: 'comet', tone: 'lavender' }, '식사·간식': { shape: 'flower', tone: 'gold' }, '함께한 일상': { shape: 'dot', tone: 'white' }, '특별한 날': { shape: 'crystal', tone: 'rose' },
+};
+export const activityTags = Object.keys(activityStyles) as ActivityTag[];
+export function activityFor(star: MemoryStarData): ActivityTag { return star.activity ?? activityTags[(star.id - 1) % activityTags.length]; }
 export const memoryStars: MemoryStarData[] = [
   { id: 1, name: '처음 집에 온 날', date: '2012. 04. 18', x: 48, y: 31, size: 11, shape: 'four', tone: 'cream', favorite: true },
   { id: 2, name: '창가의 오후', date: '2012. 08. 02', x: 40, y: 41, size: 7, shape: 'dot', tone: 'cream' },
