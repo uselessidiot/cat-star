@@ -597,12 +597,15 @@ export function SkyScene() {
 
   async function createMockMemories() {
     const nextId = 21 + addedStars.length;
-    const mocks: MemoryStarData[] = [{ id: nextId, name: '창가에서 보낸 저녁', date: '2020. 09. 03', x: 56, y: 36, size: 10, shape: 'four', tone: 'blue', activity: '창가 구경', depth: 1.62, photoCount: 2, created: true }];
-    const mockPhotos = await Promise.all(['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'].map(async (url) => (await fetch(url)).blob()));
-    const mockNotes = ['햇빛과 빗소리가 번갈아 머물던 창가의 조용한 기억.'];
+    const mockCount = 20;
+    const mockPhotoUrls = Array.from({ length: mockCount }, (_, index) => index % 2 === 0 ? '/assets/mock-memory-window.png' : '/assets/mock-memory-rain.png');
+    const mocks: MemoryStarData[] = [{ id: nextId, name: '목업 사진 20장 테스트', date: '2020. 09. 03', x: 56, y: 36, size: 12, shape: 'four', tone: 'blue', activity: '창가 구경', depth: 1.62, photoCount: mockCount, created: true }];
+    const mockTemplates = await Promise.all(['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'].map(async (url) => (await fetch(url)).blob()));
+    const mockPhotos = Array.from({ length: mockCount }, (_, index) => mockTemplates[index % mockTemplates.length].slice(0, mockTemplates[index % mockTemplates.length].size, mockTemplates[index % mockTemplates.length].type));
+    const mockNotes = ['여러 장의 사진이 별 하나 안에서 부드럽게 넘어가는지 확인하는 테스트 기억이에요.'];
     await saveStoredMemories([{ id: mocks[0].id, star: mocks[0], note: mockNotes[0], photos: mockPhotos, createdAt: new Date().toISOString() }]);
     setAddedStars((stars) => [...stars, ...mocks]);
-    setPhotoUrls((current) => ({ ...current, [nextId]: ['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'] }));
+    setPhotoUrls((current) => ({ ...current, [nextId]: mockPhotoUrls }));
     setAddedNotes((current) => ({ ...current, [nextId]: mockNotes[0] }));
     setBornIds(mocks.map((star) => star.id));
     setCreationNotice({ id: nextId, count: 1, name: mocks[0].name });
@@ -831,7 +834,7 @@ export function SkyScene() {
           <fieldset className="activity-picker"><legend>어떤 활동의 기억인가요?</legend>{activityTags.map((activity) => <button key={activity} type="button" aria-pressed={draft.activity === activity} className={`tone-${activityStyles[activity].tone}`} onClick={() => setDraft({ ...draft, activity })}><i className={`tag-star shape-${activityStyles[activity].shape}`} />{activity}</button>)}</fieldset>
           <div className="single-fields"><label><span>기억 이름</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="예: 창가에서 보낸 오후" /></label><label><span>날짜</span><input type="date" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></label><label className="note-field"><span>짧은 기억</span><textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="그날의 온기를 한두 문장으로 남겨요" rows={3} /></label></div>
           <button className="create-submit" type="submit" disabled={pendingFiles.length === 0}>{fillTargetId ? '이 별에 기억 담기' : '밤하늘에 기억별 띄우기'} <span>✦</span></button>
-          {!fillTargetId && <button className="mock-create" type="button" onClick={createMockMemories}>목업 사진 2장으로 별 하나 띄우기</button>}
+          {!fillTargetId && <button className="mock-create" type="button" onClick={createMockMemories}>목업 사진 20장으로 테스트 별 띄우기</button>}
           <p className="creator-note">이 기기의 미리보기 앨범에도 함께 저장돼요.</p>
         </form>
       </div>
