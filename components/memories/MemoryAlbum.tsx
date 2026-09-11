@@ -2,11 +2,11 @@
 /* oxlint-disable next/no-html-link-for-pages */
 
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type TouchEvent } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { activityFor, activityTags, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
-import { deleteStoredMemory, getStoredMemories, updateStoredMemory } from '@/lib/memory-store';
+import { activityFor, activityStyles, activityTags, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
+import { deleteStoredMemory, getStoredMemories, MEMORY_STORE_CHANGED, updateStoredMemory } from '@/lib/memory-store';
 
 type AlbumMemory = { id: string; starId: number; name: string; date: string; note: string; activity: ActivityTag; images: string[]; photos?: Blob[]; uploaded?: boolean; star?: MemoryStarData };
 
@@ -27,20 +27,34 @@ export function MemoryAlbum() {
   const [edit, setEdit] = useState<{ name: string; date: string; note: string; activity: ActivityTag }>({ name: '', date: '', note: '', activity: '함께한 일상' });
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editPhotos, setEditPhotos] = useState<Blob[]>([]);
+  const photoSwipe = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     let active = true;
     const urls: string[] = [];
-    getStoredMemories().then((stored) => {
-      if (!active) return;
-      const uploaded = stored.map((memory): AlbumMemory => {
-        const images = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
-        return { id: `stored-${memory.id}`, starId: memory.id, name: memory.star.name, date: memory.star.date, note: memory.note, activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, star: memory.star };
-      });
-      const seen = new Set(uploaded.map((memory) => `${memory.name}-${memory.date}`));
-      setMemories([...uploaded, ...mockMemories.filter((memory) => !seen.has(`${memory.name}-${memory.date}`))]);
-    }).catch(() => undefined);
-    return () => { active = false; urls.forEach((url) => URL.revokeObjectURL(url)); };
+    function loadMemoriesFromStore() {
+      getStoredMemories().then((stored) => {
+        if (!active) return;
+        const uploaded = stored.map((memory): AlbumMemory => {
+          const images = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
+          return { id: `stored-${memory.id}`, starId: memory.id, name: memory.star.name, date: memory.star.date, note: memory.note, activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, star: memory.star };
+        });
+        const seen = new Set(uploaded.map((memory) => `${memory.name}-${memory.date}`));
+        setMemories([...uploaded, ...mockMemories.filter((memory) => !seen.has(`${memory.name}-${memory.date}`))]);
+      }).catch(() => undefined);
+    }
+    function handleStorage(event: StorageEvent) {
+      if (event.key === MEMORY_STORE_CHANGED) loadMemoriesFromStore();
+    }
+    loadMemoriesFromStore();
+    window.addEventListener(MEMORY_STORE_CHANGED, loadMemoriesFromStore);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      active = false;
+      window.removeEventListener(MEMORY_STORE_CHANGED, loadMemoriesFromStore);
+      window.removeEventListener('storage', handleStorage);
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, []);
 
   const visibleMemories = useMemo(() => {
@@ -56,10 +70,27 @@ export function MemoryAlbum() {
     if (!selected) return;
     setPhotoIndex((index) => (index + direction + selected.images.length) % selected.images.length);
   }
+  function startPhotoSwipe(event: TouchEvent<HTMLElement>) {
+    const touch = event.touches[0];
+    if (!touch) return;
+    photoSwipe.current = { x: touch.clientX, y: touch.clientY };
+  }
+  function finishPhotoSwipe(event: TouchEvent<HTMLElement>) {
+    if (!selected) return;
+    const start = photoSwipe.current;
+    const touch = event.changedTouches[0];
+    photoSwipe.current = null;
+    if (!start || !touch || selected.images.length < 2) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.2) movePhoto(dx < 0 ? 1 : -1);
+  }
   async function saveEdit() {
     if (!selected) return;
-    const updated = { ...selected, ...edit, images: editImages, photos: editPhotos };
-    if (selected.uploaded && selected.star) await updateStoredMemory(selected.starId, { star: { ...selected.star, name: edit.name, date: edit.date, activity: edit.activity, photoCount: editPhotos.length }, note: edit.note, photos: editPhotos });
+    const style = activityStyles[edit.activity];
+    const updatedStar = selected.star ? { ...selected.star, name: edit.name, date: edit.date, activity: edit.activity, shape: style.shape, tone: style.tone, photoCount: editImages.length, created: true } : undefined;
+    const updated = { ...selected, ...edit, images: editImages, photos: editPhotos, star: updatedStar };
+    if (selected.uploaded && updatedStar) await updateStoredMemory(selected.starId, { star: updatedStar, note: edit.note, photos: editPhotos });
     setMemories((items) => items.map((item) => item.id === selected.id ? updated : item)); setSelected(updated); setEditing(false);
   }
   function addEditPhotos(files: FileList | null) { const added = Array.from(files ?? []); setEditPhotos((photos) => [...photos, ...added]); setEditImages((images) => [...images, ...added.map((file) => URL.createObjectURL(file))]); }
@@ -82,7 +113,7 @@ export function MemoryAlbum() {
     <Dialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null); }}>
       <DialogContent className="memory-album-dialog" showCloseButton={false}>
         {selected && editing && <section className="edit-photo-manager"><header><span>사진 {editImages.length}장</span><label>＋ 사진 추가<input type="file" accept="image/*" multiple onChange={(event) => addEditPhotos(event.target.files)} /></label></header><div>{editImages.map((image, index) => <article key={`${image}-${index}`}><figure style={{ backgroundImage:`url(${image})` }}><span>{index === 0 ? '대표' : index + 1}</span></figure><div><button type="button" onClick={() => makeCover(index)} disabled={index === 0}>대표</button><button type="button" onClick={() => moveEditPhoto(index, -1)} disabled={index === 0}>←</button><button type="button" onClick={() => moveEditPhoto(index, 1)} disabled={index === editImages.length - 1}>→</button><button type="button" onClick={() => removeEditPhoto(index)}>제거</button></div></article>)}</div></section>}
-        {selected && <><button className="album-detail-close" type="button" aria-label="기억 닫기" onClick={() => setSelected(null)}>×</button><section className="album-photo-viewer" aria-label={`${selected.name} 사진 ${photoIndex + 1} / ${selected.images.length}`}><figure>{selected.images[photoIndex] ? <Image src={selected.images[photoIndex]} alt={`${selected.name}의 ${photoIndex + 1}번째 사진`} fill sizes="(max-width: 720px) 92vw, 58vw" unoptimized={selected.uploaded} /> : <span className="gallery-image-placeholder">✦</span>}</figure>{selected.images.length > 1 && <><button className="album-photo-prev" type="button" onClick={() => movePhoto(-1)} aria-label="이전 사진">‹</button><button className="album-photo-next" type="button" onClick={() => movePhoto(1)} aria-label="다음 사진">›</button><div className="album-photo-position">{photoIndex + 1} / {selected.images.length}</div><div className="album-thumbnails">{selected.images.map((image, index) => <button type="button" key={image} aria-label={`${index + 1}번째 사진 보기`} aria-current={photoIndex === index} onClick={() => setPhotoIndex(index)}><Image src={image} alt="" fill sizes="58px" unoptimized={selected.uploaded} /></button>)}</div></>}</section><section className="album-detail-copy">{editing ? <div className="memory-edit-form"><label>기억 이름<input value={edit.name} onChange={(e) => setEdit({ ...edit, name:e.target.value })} /></label><label>날짜<input value={edit.date} onChange={(e) => setEdit({ ...edit, date:e.target.value })} /></label><label>활동<select value={edit.activity} onChange={(e) => setEdit({ ...edit, activity:e.target.value as ActivityTag })}>{activityTags.map((tag) => <option key={tag}>{tag}</option>)}</select></label><label>메모<textarea rows={4} value={edit.note} onChange={(e) => setEdit({ ...edit, note:e.target.value })} /></label><div><button type="button" onClick={() => setEditing(false)}>취소</button><button type="button" onClick={saveEdit}>저장</button></div></div> : <><span>MEMORY STAR · {selected.date}</span><DialogTitle>{selected.name}</DialogTitle><em className="album-activity-tag">{selected.activity}</em><DialogDescription>{selected.note}</DialogDescription><a href={`/?memory=${selected.starId}`}>밤하늘에서 별 위치 보기 <b>✦</b></a><div className="memory-manage-actions"><button type="button" onClick={() => setEditing(true)}>기억 수정</button><button type="button" onClick={() => setDeleteOpen(true)}>삭제</button></div></>}</section></>}
+        {selected && <><button className="album-detail-close" type="button" aria-label="기억 닫기" onClick={() => setSelected(null)}>×</button><section className={`album-photo-viewer${selected.images.length > 1 ? ' swipeable-album' : ''}`} aria-label={`${selected.name} 사진 ${photoIndex + 1} / ${selected.images.length}`} onTouchStart={startPhotoSwipe} onTouchEnd={finishPhotoSwipe}><figure>{selected.images[photoIndex] ? <Image src={selected.images[photoIndex]} alt={`${selected.name}의 ${photoIndex + 1}번째 사진`} fill sizes="(max-width: 720px) 92vw, 58vw" unoptimized={selected.uploaded} /> : <span className="gallery-image-placeholder">✦</span>}</figure>{selected.images.length > 1 && <><button className="album-photo-prev" type="button" onClick={() => movePhoto(-1)} aria-label="이전 사진">‹</button><button className="album-photo-next" type="button" onClick={() => movePhoto(1)} aria-label="다음 사진">›</button><div className="album-photo-position">{photoIndex + 1} / {selected.images.length}</div><div className="album-thumbnails">{selected.images.map((image, index) => <button type="button" key={image} aria-label={`${index + 1}번째 사진 보기`} aria-current={photoIndex === index} onClick={() => setPhotoIndex(index)}><Image src={image} alt="" fill sizes="58px" unoptimized={selected.uploaded} /></button>)}</div></>}</section><section className="album-detail-copy">{editing ? <div className="memory-edit-form"><label>기억 이름<input value={edit.name} onChange={(e) => setEdit({ ...edit, name:e.target.value })} /></label><label>날짜<input value={edit.date} onChange={(e) => setEdit({ ...edit, date:e.target.value })} /></label><label>활동<select value={edit.activity} onChange={(e) => setEdit({ ...edit, activity:e.target.value as ActivityTag })}>{activityTags.map((tag) => <option key={tag}>{tag}</option>)}</select></label><label>메모<textarea rows={4} value={edit.note} onChange={(e) => setEdit({ ...edit, note:e.target.value })} /></label><div><button type="button" onClick={() => setEditing(false)}>취소</button><button type="button" onClick={saveEdit}>저장</button></div></div> : <><span>MEMORY STAR · {selected.date}</span><DialogTitle>{selected.name}</DialogTitle><em className="album-activity-tag">{selected.activity}</em><DialogDescription>{selected.note}</DialogDescription><a href={`/?memory=${selected.starId}`}>밤하늘에서 별 위치 보기 <b>✦</b></a><div className="memory-manage-actions"><button type="button" onClick={() => setEditing(true)}>기억 수정</button><button type="button" onClick={() => setDeleteOpen(true)}>삭제</button></div></>}</section></>}
       </DialogContent>
     </Dialog>
     <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}><AlertDialogContent className="memory-delete-dialog"><AlertDialogHeader><AlertDialogTitle>이 기억별을 지울까요?</AlertDialogTitle><AlertDialogDescription>앨범과 밤하늘에서 함께 사라집니다. 이 작업은 되돌릴 수 없어요.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>취소</AlertDialogCancel><AlertDialogAction onClick={removeMemory}>기억별 삭제</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
