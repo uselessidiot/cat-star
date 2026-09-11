@@ -495,3 +495,57 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
     font-size: 9px;
   }
 }
+
+/* Dense mock-sky tuning: many created stars should feel distant, not busy. */
+.memory-star.filled.created:not(.selected)::before {
+  inset: 10px;
+  opacity: .3;
+  filter: blur(5px);
+  background: radial-gradient(circle, rgba(255,232,190,.54) 0, rgba(255,190,142,.12) 39%, rgba(214,190,226,.06) 64%, transparent 76%);
+}
+
+.memory-star.filled.created:not(.selected) .star-core {
+  width: calc(var(--star-size) * .72);
+  height: calc(var(--star-size) * .72);
+  opacity: .76;
+  box-shadow:
+    0 0 3px color-mix(in srgb,currentColor 76%,transparent),
+    0 0 9px color-mix(in srgb,currentColor 38%,transparent),
+    0 0 18px rgba(255,192,145,.12);
+}
+
+.memory-star.filled.created.shape-orb:not(.selected) .star-core {
+  width: calc(var(--star-size) * 1.55);
+  height: calc(var(--star-size) * 1.55);
+}
+
+.memory-star.filled.created[data-distance='close'] .proximity-ring {
+  border-color: rgba(255,235,202,.14);
+  opacity: .44;
+  box-shadow: 0 0 12px rgba(255,198,153,.07);
+  transform: scale(.9);
+}
+
+.memory-star.filled.created[data-reachability='approach'] .proximity-ring {
+  opacity: .1;
+}
+
+.memory-star.filled.created.newly-born::before {
+  animation: quiet-birth-halo 2.1s var(--ease-soft) both;
+}
+
+.memory-star.filled.created.newly-born .star-core {
+  animation: quiet-star-birth 2.1s var(--ease-soft) both,natural-twinkle var(--twinkle-duration) ease-in-out 2.1s infinite;
+}
+
+@keyframes quiet-star-birth {
+  0% { opacity:0; filter:brightness(1); transform:translate(-50%,-50%) scale(.22); }
+  45% { opacity:.9; filter:brightness(1.13); transform:translate(-50%,-50%) scale(1.16); }
+  100% { opacity:.76; filter:brightness(1); transform:translate(-50%,-50%) scale(1); }
+}
+
+@keyframes quiet-birth-halo {
+  0% { opacity:0; transform:scale(.3); }
+  48% { opacity:.36; transform:scale(1.28); }
+  100% { opacity:.22; transform:scale(.82); }
+}

@@ -596,23 +596,34 @@ export function SkyScene() {
   }
 
   async function createMockMemories() {
-    const nextId = 21 + addedStars.length;
     const mockCount = 20;
-    const mockPhotoUrls = Array.from({ length: mockCount }, (_, index) => index % 2 === 0 ? '/assets/mock-memory-window.png' : '/assets/mock-memory-rain.png');
-    const mocks: MemoryStarData[] = [{ id: nextId, name: '목업 사진 20장 테스트', date: '2020. 09. 03', x: 56, y: 36, size: 12, shape: 'four', tone: 'blue', activity: '창가 구경', depth: 1.62, photoCount: mockCount, created: true }];
-    const mockTemplates = await Promise.all(['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'].map(async (url) => (await fetch(url)).blob()));
-    const mockPhotos = Array.from({ length: mockCount }, (_, index) => mockTemplates[index % mockTemplates.length].slice(0, mockTemplates[index % mockTemplates.length].size, mockTemplates[index % mockTemplates.length].type));
-    const mockNotes = ['여러 장의 사진이 별 하나 안에서 부드럽게 넘어가는지 확인하는 테스트 기억이에요.'];
-    await saveStoredMemories([{ id: mocks[0].id, star: mocks[0], note: mockNotes[0], photos: mockPhotos, createdAt: new Date().toISOString() }]);
+    const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
+    const positions = [
+      [31, 32, .92], [43, 29, 1.05], [59, 31, 1.16], [69, 39, 1.28], [36, 45, 1.4],
+      [51, 42, 1.5], [76, 50, 1.58], [24, 54, 1.66], [46, 58, 1.74], [64, 61, 1.82],
+      [82, 35, 1.88], [18, 41, 1.93], [57, 24, 1.98], [72, 28, 2.02], [29, 67, 2.06],
+      [40, 71, 2.09], [55, 68, 2.11], [68, 72, 2.13], [84, 64, 2.15], [16, 62, 2.17],
+    ];
+    const names = ['햇살 아래 눈인사', '작은 꼬리의 오후', '담요 위 낮잠', '창가에 남은 빛', '조용한 발소리', '비 오는 날의 숨', '간식 앞 기다림', '문틈 사이 시선', '소파 끝의 자리', '새벽의 골골송', '가벼운 장난감', '따뜻한 무릎', '초록 화분 곁', '긴 하품 하나', '복도 끝 탐험', '느린 눈맞춤', '노을빛 수염', '작은 박스 성', '달빛 아래 등', '다시 찾아온 밤'];
+    const activities: ActivityTag[] = ['창가 구경', '함께한 일상', '낮잠', '창가 구경', '함께한 일상', '특별한 날', '식사·간식', '놀이', '낮잠', '함께한 일상', '놀이', '함께한 일상', '산책·외출', '낮잠', '산책·외출', '특별한 날', '창가 구경', '놀이', '함께한 일상', '특별한 날'];
+    const mockPhotoUrls = ['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'];
+    const mockTemplates = await Promise.all(mockPhotoUrls.map(async (url) => (await fetch(url)).blob()));
+    const mocks: MemoryStarData[] = positions.map(([x, y, depth], index) => {
+      const activity = activities[index];
+      const style = activityStyles[activity];
+      return { id: nextId + index, name: names[index], date: `2020. ${String(1 + Math.floor(index / 2)).padStart(2, '0')}. ${String(3 + index).padStart(2, '0')}`, x, y, size: 4 + index % 4, shape: style.shape, tone: style.tone, activity, depth, photoCount: 1, created: true };
+    });
+    const mockNotes = Object.fromEntries(mocks.map((star, index) => [star.id, `${star.name}이 밤하늘에 새로 머무는 모습을 확인하기 위한 목업 기억이에요.`]));
+    await saveStoredMemories(mocks.map((star, index) => ({ id: star.id, star, note: mockNotes[star.id], photos: [mockTemplates[index % mockTemplates.length].slice(0, mockTemplates[index % mockTemplates.length].size, mockTemplates[index % mockTemplates.length].type)], createdAt: new Date().toISOString() })));
     setAddedStars((stars) => [...stars, ...mocks]);
-    setPhotoUrls((current) => ({ ...current, [nextId]: mockPhotoUrls }));
-    setAddedNotes((current) => ({ ...current, [nextId]: mockNotes[0] }));
+    setPhotoUrls((current) => ({ ...current, ...Object.fromEntries(mocks.map((star, index) => [star.id, [mockPhotoUrls[index % mockPhotoUrls.length]]])) }));
+    setAddedNotes((current) => ({ ...current, ...mockNotes }));
     setBornIds(mocks.map((star) => star.id));
-    setCreationNotice({ id: nextId, count: 1, name: mocks[0].name });
+    setCreationNotice({ id: mocks[mocks.length - 1].id, count: mockCount, name: '목업 기억별 20개' });
     closeCreator();
     setTimeout(() => setBornIds([]), 2400);
     setTimeout(() => setCreationNotice(null), 6200);
-    focusStar(mocks[0].id, mocks[0].depth);
+    focusStar(mocks[mocks.length - 1].id, mocks[mocks.length - 1].depth);
   }
 
   function handlePointerDown(event: PointerEvent<HTMLElement>) {
@@ -732,7 +743,7 @@ export function SkyScene() {
             const mobile = project(mobilePosition[0], mobilePosition[1], depthFor(star.id), travel);
             return <button key={star.id} type="button" data-reachability={selectable ? 'selectable' : 'approach'}
               data-depth={starDepths[star.id] ?? 'far'} data-distance={distance < .03 ? 'passed' : selectable ? 'close' : 'far'} data-memory={hasPhoto ? 'filled' : 'empty'}
-              className={`memory-star shape-${visual.shape} tone-${visual.tone}${star.favorite ? ' favorite' : ''}${hasPhoto ? ' filled' : ' empty'}${bornIds.includes(star.id) ? ' newly-born' : ''}${selectedId === star.id ? ' selected' : ''}${related ? ' tag-related' : ''}${selectedId && selectedId !== star.id && !related ? ' dimmed' : ''}`}
+              className={`memory-star shape-${visual.shape} tone-${visual.tone}${star.favorite ? ' favorite' : ''}${hasPhoto ? ' filled' : ' empty'}${star.created ? ' created' : ''}${bornIds.includes(star.id) ? ' newly-born' : ''}${selectedId === star.id ? ' selected' : ''}${related ? ' tag-related' : ''}${selectedId && selectedId !== star.id && !related ? ' dimmed' : ''}`}
               style={{ left:`${x}%`, top:`${y}%`, opacity, '--depth-scale': scale, '--mobile-x':`${mobile.x}%`, '--mobile-y':`${mobile.y}%`, '--star-size':`${star.size}px`, '--twinkle-delay':`${(-((star.id * 1.37) % 8)).toFixed(2)}s`, '--twinkle-duration':`${(5.4 + (star.id % 5) * 1.1).toFixed(1)}s`, '--arrival-delay':`${120 + star.id * 42}ms` } as CSSProperties}
               aria-label={`${star.name}, ${star.date}${selectable ? ', 가까운 기억' : ', 멀리 있는 기억, 가까이 이동'}`} aria-pressed={selectedId === star.id}
               onClick={() => { if (suppressNextTap.current) return; selectedId === star.id && detailReady ? closeSelectedStar() : visitStar(star.id, star.depth, selectable ? 760 : 1080); }}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '지금 열어볼 수 있어요' : '기억을 기다려요' : '조금 더 가까이'}</small></span></button>;
@@ -834,7 +845,7 @@ export function SkyScene() {
           <fieldset className="activity-picker"><legend>어떤 활동의 기억인가요?</legend>{activityTags.map((activity) => <button key={activity} type="button" aria-pressed={draft.activity === activity} className={`tone-${activityStyles[activity].tone}`} onClick={() => setDraft({ ...draft, activity })}><i className={`tag-star shape-${activityStyles[activity].shape}`} />{activity}</button>)}</fieldset>
           <div className="single-fields"><label><span>기억 이름</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="예: 창가에서 보낸 오후" /></label><label><span>날짜</span><input type="date" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></label><label className="note-field"><span>짧은 기억</span><textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="그날의 온기를 한두 문장으로 남겨요" rows={3} /></label></div>
           <button className="create-submit" type="submit" disabled={pendingFiles.length === 0}>{fillTargetId ? '이 별에 기억 담기' : '밤하늘에 기억별 띄우기'} <span>✦</span></button>
-          {!fillTargetId && <button className="mock-create" type="button" onClick={createMockMemories}>목업 사진 20장으로 테스트 별 띄우기</button>}
+          {!fillTargetId && <button className="mock-create" type="button" onClick={createMockMemories}>목업 기억별 20개 띄워보기</button>}
           <p className="creator-note">이 기기의 미리보기 앨범에도 함께 저장돼요.</p>
         </form>
       </div>
