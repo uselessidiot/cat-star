@@ -6,6 +6,7 @@ export type StoredMemory = {
   note: string;
   photos: Blob[];
   createdAt: string;
+  testSeed?: boolean;
 };
 
 export type CatProfile = {

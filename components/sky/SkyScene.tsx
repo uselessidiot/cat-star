@@ -4,11 +4,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type PointerEvent, type SyntheticEvent, type TouchEvent, type WheelEvent } from 'react';
 import Image from 'next/image';
 import { activityFor, activityStyles, activityTags, constellationPairs, memoryStars, mobileStarPositions, starDepths, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
-import { getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
+import { deleteStoredMemory, getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
 
 const MAX_TRAVEL = 2.18;
 const END_STORY_GATE = MAX_TRAVEL - .045;
-type BulkGroup = { key: string; date: string; name: string; files: File[]; previews: string[]; enabled: boolean; activity: ActivityTag | null };
+const STORY_APPROACH_START = END_STORY_GATE - .32;
 
 function clampTravel(value: number) {
   return Math.min(MAX_TRAVEL, Math.max(0, value));
@@ -69,21 +69,12 @@ function daysBetween(from: string) {
   return Math.max(1, Math.floor((Date.now() - start.getTime()) / 86400000) + 1);
 }
 
-function groupFilesByDate(files: File[]): BulkGroup[] {
-  const groups = new Map<string, File[]>();
-  files.forEach((file) => {
-    const date = dateFromFile(file);
-    groups.set(date, [...(groups.get(date) ?? []), file]);
-  });
-  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, groupedFiles], index) => ({
-    key: `${date}-${index}`,
-    date,
-    name: `${date.replaceAll('-', '. ')}의 기억`,
-    files: groupedFiles,
-    previews: groupedFiles.map((file) => URL.createObjectURL(file)),
-    enabled: true,
-    activity: null,
-  }));
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function readableMemoryNote(note: string) {
+  return note.replace(`${TEST_SEED_MARKER} `, '');
 }
 
 const catStoryMessages = [
@@ -121,6 +112,41 @@ const defaultCatProfile: CatProfile = {
   description: '한 장면을 담은 기억별과 달리, 이 별은 모든 기억이 돌아오는 중심이에요. 함께한 시간 전체를 조용히 품고 있어요.',
 };
 
+const createdStarPath = [
+  [42, 38], [58, 35], [35, 48], [66, 47], [49, 58], [28, 40],
+  [74, 56], [39, 66], [61, 64], [22, 56], [78, 34], [51, 27],
+];
+
+const TEST_SEED_MARKER = '[cat-star-test-seed]';
+const OPENING_STORY_SEEN = 'cat-star-opening-story-seen';
+const isLocalDevelopment = process.env.NODE_ENV !== 'production';
+
+const testMemorySeeds: Array<{ name: string; date: string; note: string; activity: ActivityTag; palette: [string, string, string] }> = [
+  { name: '테스트 01 · 창가 첫빛', date: '2020-03-01', note: '아침 창가에 오래 머문 사진 한 장을 넣었을 때의 별이에요.', activity: '창가 구경', palette: ['#756fa8', '#f3c8bb', '#fff2c9'] },
+  { name: '테스트 02 · 낮잠 자리', date: '2020-03-04', note: '담요 위에서 잠든 순간이 부드러운 별로 놓이는지 보는 테스트예요.', activity: '낮잠', palette: ['#5f6f9f', '#e8b4c4', '#ffe4ae'] },
+  { name: '테스트 03 · 장난감 소리', date: '2020-03-08', note: '놀이 사진이 조금 더 생기 있게 보이는지 확인해요.', activity: '놀이', palette: ['#6b5f9a', '#f1aa91', '#fff8d6'] },
+  { name: '테스트 04 · 간식 기다림', date: '2020-03-11', note: '간식 앞에서 반짝이던 눈빛을 별 하나로 남겨요.', activity: '식사·간식', palette: ['#79679b', '#f4bd7d', '#fff4c7'] },
+  { name: '테스트 05 · 비 오는 날', date: '2020-03-15', note: '흐린 날의 사진도 밤하늘에서 너무 어둡지 않은지 살펴봐요.', activity: '함께한 일상', palette: ['#586c99', '#b9b0d3', '#f6dbc4'] },
+  { name: '테스트 06 · 병원 다녀온 날', date: '2020-03-19', note: '외출 기억이 차분한 보라빛 별로 자리 잡는지 확인해요.', activity: '산책·외출', palette: ['#625889', '#c3aad5', '#fee2bd'] },
+  { name: '테스트 07 · 생일 리본', date: '2020-03-22', note: '특별한 날의 별이 다른 별 사이에서 살짝 돋보이는지 봐요.', activity: '특별한 날', palette: ['#7b5f91', '#eda5b6', '#fff1c2'] },
+  { name: '테스트 08 · 소파 옆자리', date: '2020-03-26', note: '평범한 일상 사진이 작고 따뜻하게 쌓이는지 보는 테스트예요.', activity: '함께한 일상', palette: ['#676d9c', '#efb9a8', '#fff3cc'] },
+  { name: '테스트 09 · 해 질 무렵', date: '2020-03-29', note: '저녁빛 사진이 복숭아색으로 너무 튀지 않게 놓이는지 확인해요.', activity: '창가 구경', palette: ['#5d6698', '#f0aa9b', '#ffdba5'] },
+  { name: '테스트 10 · 손끝 온기', date: '2020-04-02', note: '열 번째 사진까지 넣었을 때 하늘이 복잡하지 않은지 보는 마지막 별이에요.', activity: '낮잠', palette: ['#706395', '#f0beb0', '#fff5cf'] },
+];
+
+function nextCreatedStarPlace(ordinal: number) {
+  const [baseX, baseY] = createdStarPath[ordinal % createdStarPath.length];
+  const lap = Math.floor(ordinal / createdStarPath.length);
+  const drift = Math.min(5, lap * 1.4);
+  const direction = ordinal % 2 === 0 ? -1 : 1;
+  return {
+    x: Math.max(14, Math.min(86, baseX + direction * drift)),
+    y: Math.max(22, Math.min(74, baseY + Math.sin((ordinal + 1) * 1.7) * 2.8)),
+    depth: Math.min(2.12, 1.38 + ordinal * .055),
+    size: 7 + ordinal % 3,
+  };
+}
+
 export function SkyScene() {
   const [addedStars, setAddedStars] = useState<MemoryStarData[]>([]);
   const [filledStars, setFilledStars] = useState<Record<number, MemoryStarData>>({});
@@ -131,15 +157,15 @@ export function SkyScene() {
   const [detailReady, setDetailReady] = useState(false);
   const [centerOpen, setCenterOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [openingStoryOpen, setOpeningStoryOpen] = useState(false);
+  const [centerTouched, setCenterTouched] = useState(false);
   const [fillTargetId, setFillTargetId] = useState<number | null>(null);
-  const [createMode, setCreateMode] = useState<'bulk' | 'single'>('bulk');
+  const [creatingMemory, setCreatingMemory] = useState(false);
+  const [seedingTestMemories, setSeedingTestMemories] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [singlePreview, setSinglePreview] = useState<string | null>(null);
-  const [memoryPreviews, setMemoryPreviews] = useState<string[]>([]);
-  const [coverIndex, setCoverIndex] = useState(0);
-  const [bulkGroups, setBulkGroups] = useState<BulkGroup[]>([]);
   const [bornIds, setBornIds] = useState<number[]>([]);
-  const [creationNotice, setCreationNotice] = useState<{ id: number; count: number; name: string } | null>(null);
+  const [creationNotice, setCreationNotice] = useState<{ id: number; name: string; message: string } | null>(null);
   const [draft, setDraft] = useState<{ name: string; date: string; note: string; activity: ActivityTag }>({ name: '', date: '', note: '', activity: '함께한 일상' });
   const [travel, setTravel] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -157,6 +183,7 @@ export function SkyScene() {
   const travelAnimation = useRef<number | null>(null);
   const travelRef = useRef(0);
   const storyLastAt = useRef(0);
+  const centerTouchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerDrag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const touchGesture = useRef<{ x: number; y: number; panX: number; panY: number; distance: number | null; travel: number; mode: 'pending' | 'pan' | 'travel' | 'pinch' } | null>(null);
@@ -179,10 +206,11 @@ export function SkyScene() {
   } as CSSProperties : undefined;
   const closest = projected.filter((item) => item.selectable).sort((a, b) => a.distance - b.distance)[0];
   const atStoryEnd = travel >= END_STORY_GATE;
-  const storyActive = storyPulse > 0 && atStoryEnd && !detailVisible && !centerOpen && !createOpen;
+  const storyActive = storyPulse > 0 && atStoryEnd && !detailVisible && !centerOpen && !createOpen && !openingStoryOpen;
   const currentStory = catStoryMessages[storyStep % catStoryMessages.length];
-  const journeyText = atStoryEnd ? '별의 끝 · 더 스크롤하면 작은 말이 떠올라요' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
-  const endWarmth = atStoryEnd ? Math.min(1, endScrolls / 9) : 0;
+  const endApproach = Math.min(1, Math.max(0, (travel - STORY_APPROACH_START) / (MAX_TRAVEL - STORY_APPROACH_START)));
+  const journeyText = atStoryEnd ? '밤 끝에서 · 천천히 더 걸으면 작은 말이 떠올라요' : endApproach > .55 ? '말이 떠오르는 밤끝으로 가는 중' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
+  const endWarmth = Math.min(1, endApproach * .42 + (atStoryEnd ? endScrolls / 9 * .58 : 0));
   const filledMemoryStars = allStars.filter((star) => (photoUrls[star.id]?.length ?? 0) > 0);
   const totalPhotoCount = filledMemoryStars.reduce((sum, star) => sum + (photoUrls[star.id]?.length ?? 0), 0);
   const datedMemories = filledMemoryStars.map((star) => ({ star, inputDate: dateInputFromDisplay(star.date) })).filter((item) => item.inputDate);
@@ -211,15 +239,26 @@ export function SkyScene() {
 
   useEffect(() => {
     function closeOnEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === 'Escape') { closeSelectedStar(); setCreateOpen(false); setCenterOpen(false); }
+      if (event.key === 'Escape') { closeSelectedStar(); setCreateOpen(false); setCenterOpen(false); closeOpeningStory(); }
     }
     document.addEventListener('keydown', closeOnEscape);
     return () => {
       document.removeEventListener('keydown', closeOnEscape);
       if (walkingTimer.current) clearTimeout(walkingTimer.current);
       if (detailTimer.current) clearTimeout(detailTimer.current);
+      if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
       if (travelAnimation.current != null) cancelAnimationFrame(travelAnimation.current);
     };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const hasRequestedMemory = Boolean(new URLSearchParams(window.location.search).get('memory'));
+      const hasSeenOpening = window.localStorage.getItem(OPENING_STORY_SEEN) === 'true';
+      if (!hasRequestedMemory && !hasSeenOpening) setOpeningStoryOpen(true);
+    } catch {
+      setOpeningStoryOpen(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -232,7 +271,7 @@ export function SkyScene() {
       const storedAddedStars = stored.filter((memory) => memory.id > 20);
       setFilledStars(Object.fromEntries(storedBaseStars.map((memory) => [memory.id, memory.star])));
       setAddedStars(storedAddedStars.map((memory) => memory.star));
-      setAddedNotes(Object.fromEntries(stored.map((memory) => [memory.id, memory.note])));
+      setAddedNotes(Object.fromEntries(stored.map((memory) => [memory.id, readableMemoryNote(memory.note)])));
       setPhotoUrls(Object.fromEntries(stored.map((memory) => {
         const photos = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
         return [memory.id, photos];
@@ -339,7 +378,31 @@ export function SkyScene() {
   function openCenterStar() {
     closeSelectedStar();
     setCenterEditing(false);
+    setOpeningStoryOpen(false);
     setCenterOpen((open) => !open);
+  }
+
+  function touchCenterStar() {
+    setCenterTouched(true);
+    setStoryPulse(0);
+    if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
+    centerTouchTimer.current = setTimeout(() => setCenterTouched(false), 2400);
+  }
+
+  function closeOpeningStory() {
+    setOpeningStoryOpen(false);
+    try {
+      window.localStorage.setItem(OPENING_STORY_SEEN, 'true');
+    } catch {
+      // Local preview storage can be unavailable in private or restricted contexts.
+    }
+  }
+
+  function replayOpeningStory() {
+    closeSelectedStar();
+    setCenterOpen(false);
+    setCreateOpen(false);
+    setOpeningStoryOpen(true);
   }
 
   function visitStar(id: number, customDepth?: number, delay = 880) {
@@ -356,30 +419,56 @@ export function SkyScene() {
     revealDetail(detailDelay);
   }
 
-  function resetUploadDraft(mode: 'bulk' | 'single') {
-    setCreateMode(mode);
+  function resetUploadDraft() {
     setPendingFiles([]);
-    setBulkGroups([]);
-    setMemoryPreviews([]);
-    setCoverIndex(0);
     setSinglePreview(null);
   }
 
-  function closeCreator() {
+  function makeTestMemoryPhoto(seed: (typeof testMemorySeeds)[number], index: number) {
+    const [sky, warmth, light] = seed.palette;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 720">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="${sky}"/>
+      <stop offset=".58" stop-color="${warmth}"/>
+      <stop offset="1" stop-color="${light}"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".42" cy=".32" r=".72">
+      <stop offset="0" stop-color="#fff8dd" stop-opacity=".86"/>
+      <stop offset=".42" stop-color="#fff0d2" stop-opacity=".36"/>
+      <stop offset="1" stop-color="#5b527f" stop-opacity=".1"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+  <rect width="720" height="720" fill="url(#sky)"/>
+  <circle cx="240" cy="210" r="230" fill="url(#glow)"/>
+  <ellipse cx="360" cy="530" rx="270" ry="90" fill="#4d456b" opacity=".18" filter="url(#soft)"/>
+  <path d="M270 438c-28-39-22-112 27-145 23-16 32-52 63-52 30 0 40 36 64 52 49 33 55 106 27 145-31 44-150 44-181 0z" fill="#fff6e8" opacity=".76"/>
+  <path d="M284 302l-44-75 91 38M436 302l44-75-91 38" fill="#fff6e8" opacity=".76"/>
+  <circle cx="326" cy="366" r="9" fill="#6d5c77" opacity=".62"/>
+  <circle cx="394" cy="366" r="9" fill="#6d5c77" opacity=".62"/>
+  <path d="M343 406c18 14 34 14 52 0" fill="none" stroke="#6d5c77" stroke-width="8" stroke-linecap="round" opacity=".46"/>
+  <text x="360" y="624" text-anchor="middle" fill="#fff8e7" font-family="Georgia, serif" font-size="28" opacity=".82">photo ${String(index + 1).padStart(2, '0')}</text>
+</svg>`;
+    return new Blob([svg], { type: 'image/svg+xml' });
+  }
+
+  function closeCreator(force = false) {
+    if (creatingMemory && !force) return;
     setCreateOpen(false);
     setFillTargetId(null);
   }
 
   function openCreatorForNewStar() {
     setFillTargetId(null);
-    resetUploadDraft('single');
+    resetUploadDraft();
     setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
     setCreateOpen(true);
   }
 
   function openFillMemory(star: MemoryStarData) {
     setFillTargetId(star.id);
-    resetUploadDraft('single');
+    resetUploadDraft();
     setDraft({
       name: star.name,
       date: star.date.replaceAll('. ', '-'),
@@ -418,15 +507,10 @@ export function SkyScene() {
   }
 
   function handleFilesSelected(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    const accepted = files;
+    const accepted = Array.from(event.target.files ?? []).slice(0, 1);
     setPendingFiles(accepted);
     const file = accepted[0];
-    const previews = accepted.map((item) => URL.createObjectURL(item));
-    setBulkGroups([]);
-    setMemoryPreviews(previews);
-    setCoverIndex(0);
-    setSinglePreview(previews[0] ?? null);
+    setSinglePreview(file ? URL.createObjectURL(file) : null);
     if (file) setDraft((current) => ({
       ...current,
       name: current.name || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '),
@@ -439,6 +523,7 @@ export function SkyScene() {
   }
 
   function handleWheel(event: WheelEvent<HTMLElement>) {
+    if (openingStoryOpen) return;
     if ((event.target as HTMLElement).closest('.memory-creator')) return;
     cancelTravelAnimation();
     const rawDelta = Math.sign(event.deltaY) * Math.min(.18, Math.abs(event.deltaY) / 560);
@@ -458,7 +543,7 @@ export function SkyScene() {
   function stirCatStory(direction: -1 | 1 = 1, force = false) {
     if (travelRef.current < END_STORY_GATE && !force) return;
     const now = performance.now();
-    if (!force && now - storyLastAt.current < 1050) return;
+    if (!force && now - storyLastAt.current < 2100) return;
     storyLastAt.current = now;
     setStoryStep((step) => storyPulse === 0 && direction > 0 ? 0 : (step + direction + catStoryMessages.length) % catStoryMessages.length);
     setStoryPulse((pulse) => pulse + 1);
@@ -496,7 +581,7 @@ export function SkyScene() {
     const element = target instanceof HTMLElement ? target : null;
     if (!element) return false;
     if (element.closest('.memory-star')) return true;
-    return !element.closest('.memory-creator, .memory-detail, .center-star-detail, .creation-notice, .journey-actions, .add-memory, .memory-library, input, textarea, select, label, a, button');
+    return !element.closest('.opening-story, .memory-creator, .memory-detail, .center-star-detail, .creation-notice, .journey-actions, .add-memory, .memory-library, input, textarea, select, label, a, button');
   }
 
   function handleTouchStart(event: TouchEvent<HTMLElement>) {
@@ -517,12 +602,12 @@ export function SkyScene() {
 
   async function createStars(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    const orderedFiles = pendingFiles.length ? [pendingFiles[coverIndex], ...pendingFiles.filter((_, index) => index !== coverIndex)] : [];
-    const orderedPreviews = memoryPreviews.length ? [memoryPreviews[coverIndex], ...memoryPreviews.filter((_, index) => index !== coverIndex)] : [];
-    const sources = orderedFiles.slice(0, 1).map((file) => ({ key: 'single', date: draft.date || dateFromFile(file), name: draft.name.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '), files: orderedFiles, previews: orderedPreviews, enabled: true, activity: draft.activity }));
-    if (sources.length === 0) return;
+    if (creatingMemory) return;
+    const file = pendingFiles[0];
+    if (!file) return;
+    setCreatingMemory(true);
+    const source = { date: draft.date || dateFromFile(file), name: draft.name.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '), file, preview: singlePreview, activity: draft.activity };
     if (fillTargetId) {
-      const source = sources[0];
       const baseStar = allStars.find((star) => star.id === fillTargetId) ?? memoryStars.find((star) => star.id === fillTargetId);
       if (!baseStar) return;
       const style = activityStyles[source.activity ?? activityFor(baseStar)];
@@ -533,97 +618,135 @@ export function SkyScene() {
         shape: style.shape,
         tone: style.tone,
         activity: source.activity ?? activityFor(baseStar),
-        photoCount: source.files.length,
+        photoCount: 1,
         created: true,
       };
-      const note = draft.note.trim() || '사진 속 순간이 이 별 안에 조용히 머물러요.';
-      await saveStoredMemories([{ id: filledStar.id, star: filledStar, note, photos: source.files, createdAt: new Date().toISOString() }]);
+      const note = draft.note.trim() || '이 순간이 조용히 별빛으로 머물러요.';
+      await saveStoredMemories([{ id: filledStar.id, star: filledStar, note, photos: [source.file], createdAt: new Date().toISOString() }]);
       setFilledStars((stars) => ({ ...stars, [filledStar.id]: filledStar }));
-      setPhotoUrls((current) => ({ ...current, [filledStar.id]: source.previews }));
+      setPhotoUrls((current) => ({ ...current, [filledStar.id]: source.preview ? [source.preview] : [] }));
       setAddedNotes((current) => ({ ...current, [filledStar.id]: note }));
       setBornIds([filledStar.id]);
-      setCreationNotice({ id: filledStar.id, count: 1, name: filledStar.name });
-      setTimeout(() => setBornIds([]), 2400);
-      setTimeout(() => setCreationNotice(null), 6200);
-      closeCreator();
+      setCreationNotice({ id: filledStar.id, name: filledStar.name, message: '기다리던 별에 기억이 스며들었어요.' });
+      setTimeout(() => setBornIds([]), 2800);
+      setTimeout(() => setCreationNotice(null), 6800);
+      await wait(980);
+      setCreatingMemory(false);
+      closeCreator(true);
       setPendingFiles([]);
-      setMemoryPreviews([]);
-      setCoverIndex(0);
+      setSinglePreview(null);
       setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
       focusStar(filledStar.id, filledStar.depth);
       return;
     }
-    const nextId = 21 + addedStars.length;
-    const nextSingleDepth = Math.min(2.08, Math.max(1.74, ...addedStars.map((star) => star.depth ?? 1.74)) + .08);
-    const created = sources.map((source, index): MemoryStarData => {
-      const id = nextId + index;
-      const angle = (id * 137.5) * Math.PI / 180;
-      const radius = 11 + (index % 5) * 3.8;
-      const chronologicalDepth = sources.length === 1 ? 1.56 : .68 + index / (sources.length - 1) * .96;
-      return {
-        id,
-        name: source.name,
-        date: source.date.replaceAll('-', '. '),
-        x: 50 + Math.cos(angle) * radius,
-        y: 43 + Math.sin(angle) * radius * .68,
-        size: 7 + id % 5,
-        shape: activityStyles[source.activity ?? '함께한 일상'].shape,
-        tone: activityStyles[source.activity ?? '함께한 일상'].tone,
-        activity: source.activity ?? undefined,
-        depth: nextSingleDepth,
-        photoCount: source.files.length,
-        created: true,
-      };
-    });
-    const urls = Object.fromEntries(created.map((star, index) => [star.id, sources[index].previews]));
-    const notes = Object.fromEntries(created.map((star) => [star.id, draft.note.trim() || '사진 속 순간을 천천히 기억별로 정리해요.']));
-    await saveStoredMemories(created.map((star, index) => ({ id: star.id, star, note: notes[star.id], photos: sources[index].files, createdAt: new Date().toISOString() })));
-    setAddedStars((stars) => [...stars, ...created]);
-    setPhotoUrls((current) => ({ ...current, ...urls }));
-    setAddedNotes((current) => ({ ...current, ...notes }));
-    setBornIds(created.map((star) => star.id));
-    setCreationNotice({ id: created[created.length - 1].id, count: created.length, name: created[created.length - 1].name });
-    setTimeout(() => setBornIds([]), 2400);
-    setTimeout(() => setCreationNotice(null), 6200);
-    closeCreator();
+    const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
+    const ordinal = allStars.filter((star) => star.created).length;
+    const place = nextCreatedStarPlace(ordinal);
+    const style = activityStyles[source.activity ?? '함께한 일상'];
+    const created: MemoryStarData = {
+      id: nextId,
+      name: source.name,
+      date: source.date.replaceAll('-', '. '),
+      x: place.x,
+      y: place.y,
+      size: place.size,
+      shape: style.shape,
+      tone: style.tone,
+      activity: source.activity ?? undefined,
+      depth: place.depth,
+      photoCount: 1,
+      created: true,
+    };
+    const note = draft.note.trim() || '이 순간이 밤하늘에 새 별로 머물러요.';
+    await saveStoredMemories([{ id: created.id, star: created, note, photos: [source.file], createdAt: new Date().toISOString() }]);
+    setAddedStars((stars) => [...stars, created]);
+    setPhotoUrls((current) => ({ ...current, [created.id]: source.preview ? [source.preview] : [] }));
+    setAddedNotes((current) => ({ ...current, [created.id]: note }));
+    setBornIds([created.id]);
+    setCreationNotice({ id: created.id, name: created.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
+    setTimeout(() => setBornIds([]), 2800);
+    setTimeout(() => setCreationNotice(null), 6800);
+    await wait(980);
+    setCreatingMemory(false);
+    closeCreator(true);
     setPendingFiles([]);
-    setBulkGroups([]);
     setSinglePreview(null);
-    setMemoryPreviews([]);
-    setCoverIndex(0);
     setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
-    focusStar(created[created.length - 1].id, created[created.length - 1].depth);
+    focusStar(created.id, created.depth);
   }
 
-  async function createMockMemories() {
-    const mockCount = 20;
-    const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
-    const positions = [
-      [31, 32, .92], [43, 29, 1.05], [59, 31, 1.16], [69, 39, 1.28], [36, 45, 1.4],
-      [51, 42, 1.5], [76, 50, 1.58], [24, 54, 1.66], [46, 58, 1.74], [64, 61, 1.82],
-      [82, 35, 1.88], [18, 41, 1.93], [57, 24, 1.98], [72, 28, 2.02], [29, 67, 2.06],
-      [40, 71, 2.09], [55, 68, 2.11], [68, 72, 2.13], [84, 64, 2.15], [16, 62, 2.17],
-    ];
-    const names = ['햇살 아래 눈인사', '작은 꼬리의 오후', '담요 위 낮잠', '창가에 남은 빛', '조용한 발소리', '비 오는 날의 숨', '간식 앞 기다림', '문틈 사이 시선', '소파 끝의 자리', '새벽의 골골송', '가벼운 장난감', '따뜻한 무릎', '초록 화분 곁', '긴 하품 하나', '복도 끝 탐험', '느린 눈맞춤', '노을빛 수염', '작은 박스 성', '달빛 아래 등', '다시 찾아온 밤'];
-    const activities: ActivityTag[] = ['창가 구경', '함께한 일상', '낮잠', '창가 구경', '함께한 일상', '특별한 날', '식사·간식', '놀이', '낮잠', '함께한 일상', '놀이', '함께한 일상', '산책·외출', '낮잠', '산책·외출', '특별한 날', '창가 구경', '놀이', '함께한 일상', '특별한 날'];
-    const mockPhotoUrls = ['/assets/mock-memory-window.png', '/assets/mock-memory-rain.png'];
-    const mockTemplates = await Promise.all(mockPhotoUrls.map(async (url) => (await fetch(url)).blob()));
-    const mocks: MemoryStarData[] = positions.map(([x, y, depth], index) => {
-      const activity = activities[index];
-      const style = activityStyles[activity];
-      return { id: nextId + index, name: names[index], date: `2020. ${String(1 + Math.floor(index / 2)).padStart(2, '0')}. ${String(3 + index).padStart(2, '0')}`, x, y, size: 4 + index % 4, shape: style.shape, tone: style.tone, activity, depth, photoCount: 1, created: true };
-    });
-    const mockNotes = Object.fromEntries(mocks.map((star, index) => [star.id, `${star.name}이 밤하늘에 새로 머무는 모습을 확인하기 위한 목업 기억이에요.`]));
-    await saveStoredMemories(mocks.map((star, index) => ({ id: star.id, star, note: mockNotes[star.id], photos: [mockTemplates[index % mockTemplates.length].slice(0, mockTemplates[index % mockTemplates.length].size, mockTemplates[index % mockTemplates.length].type)], createdAt: new Date().toISOString() })));
-    setAddedStars((stars) => [...stars, ...mocks]);
-    setPhotoUrls((current) => ({ ...current, ...Object.fromEntries(mocks.map((star, index) => [star.id, [mockPhotoUrls[index % mockPhotoUrls.length]]])) }));
-    setAddedNotes((current) => ({ ...current, ...mockNotes }));
-    setBornIds(mocks.map((star) => star.id));
-    setCreationNotice({ id: mocks[mocks.length - 1].id, count: mockCount, name: '목업 기억별 20개' });
-    closeCreator();
-    setTimeout(() => setBornIds([]), 2400);
-    setTimeout(() => setCreationNotice(null), 6200);
-    focusStar(mocks[mocks.length - 1].id, mocks[mocks.length - 1].depth);
+  async function seedTenTestMemories() {
+    if (seedingTestMemories) return;
+    setSeedingTestMemories(true);
+    try {
+      const stored = await getStoredMemories();
+      const testSeeds = stored.filter((memory) => memory.testSeed || memory.note.startsWith(TEST_SEED_MARKER));
+      const preserved = stored.filter((memory) => !memory.testSeed && !memory.note.startsWith(TEST_SEED_MARKER));
+      await Promise.all(testSeeds.map((memory) => deleteStoredMemory(memory.id)));
+
+      const existingStars = [...memoryStars, ...preserved.map((memory) => memory.star)];
+      const firstId = Math.max(20, ...existingStars.map((star) => star.id)) + 1;
+      const ordinalStart = existingStars.filter((star) => star.created).length;
+      const createdAt = new Date().toISOString();
+      const seeded = testMemorySeeds.map((seed, index) => {
+        const place = nextCreatedStarPlace(ordinalStart + index);
+        const style = activityStyles[seed.activity];
+        const star: MemoryStarData = {
+          id: firstId + index,
+          name: seed.name,
+          date: seed.date.replaceAll('-', '. '),
+          x: place.x,
+          y: place.y,
+          size: place.size,
+          shape: style.shape,
+          tone: style.tone,
+          activity: seed.activity,
+          depth: place.depth,
+          photoCount: 1,
+          created: true,
+        };
+        return { id: star.id, star, note: seed.note, photos: [makeTestMemoryPhoto(seed, index)], createdAt, testSeed: true };
+      });
+
+      await saveStoredMemories(seeded);
+      setAddedStars([...preserved.filter((memory) => memory.id > 20).map((memory) => memory.star), ...seeded.map((memory) => memory.star)]);
+      setFilledStars(Object.fromEntries(preserved.filter((memory) => memory.id <= 20).map((memory) => [memory.id, memory.star])));
+      setAddedNotes(Object.fromEntries([...preserved, ...seeded].map((memory) => [memory.id, readableMemoryNote(memory.note)])));
+      setPhotoUrls(Object.fromEntries([...preserved, ...seeded].map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
+      setBornIds(seeded.map((memory) => memory.id));
+      setCreationNotice({ id: seeded[seeded.length - 1].id, name: '테스트 사진 10장', message: '사진을 하나씩 넣었을 때 생기는 별 10개를 채웠어요.' });
+      setTimeout(() => setBornIds([]), 3200);
+      setTimeout(() => setCreationNotice(null), 7600);
+      closeSelectedStar();
+      setCenterOpen(false);
+      setCreateOpen(false);
+      animateTravelTo(0, 920);
+      beginWalking(920);
+    } finally {
+      setSeedingTestMemories(false);
+    }
+  }
+
+  async function clearTestMemories() {
+    if (seedingTestMemories) return;
+    setSeedingTestMemories(true);
+    try {
+      const stored = await getStoredMemories();
+      const testSeeds = stored.filter((memory) => memory.testSeed || memory.note.startsWith(TEST_SEED_MARKER));
+      const preserved = stored.filter((memory) => !memory.testSeed && !memory.note.startsWith(TEST_SEED_MARKER));
+      await Promise.all(testSeeds.map((memory) => deleteStoredMemory(memory.id)));
+      setAddedStars(preserved.filter((memory) => memory.id > 20).map((memory) => memory.star));
+      setFilledStars(Object.fromEntries(preserved.filter((memory) => memory.id <= 20).map((memory) => [memory.id, memory.star])));
+      setAddedNotes(Object.fromEntries(preserved.map((memory) => [memory.id, readableMemoryNote(memory.note)])));
+      setPhotoUrls(Object.fromEntries(preserved.map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
+      setBornIds([]);
+      closeSelectedStar();
+      setCenterOpen(false);
+      setCreationNotice({ id: memoryStars[0].id, name: '테스트 기억을 지웠어요', message: '사진 10장 테스트로 만든 별만 밤하늘에서 비웠어요.' });
+      setTimeout(() => setCreationNotice(null), 5200);
+    } finally {
+      setSeedingTestMemories(false);
+    }
   }
 
   function handlePointerDown(event: PointerEvent<HTMLElement>) {
@@ -706,11 +829,15 @@ export function SkyScene() {
   }
 
   return (
-    <main className={`sky-scene${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={{ '--travel': travel, '--end-warmth': endWarmth, '--pan-x':`${pan.x}px`, '--pan-y':`${pan.y}px`, '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`, '--cat-visit-shift': `${catVisitShift}vw`, '--sky-follow-shift': `${skyFollowShift}vw`, '--cat-lean': `${catLean}deg`, '--cat-counter-lean': `${-catLean * .6}deg`, '--cat-step-x': `${catStep}px` } as CSSProperties}>
+    <main className={`sky-scene${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={{ '--travel': travel, '--end-warmth': endWarmth, '--pan-x':`${pan.x}px`, '--pan-y':`${pan.y}px`, '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`, '--cat-visit-shift': `${catVisitShift}vw`, '--sky-follow-shift': `${skyFollowShift}vw`, '--cat-lean': `${catLean}deg`, '--cat-counter-lean': `${-catLean * .6}deg`, '--cat-step-x': `${catStep}px` } as CSSProperties}>
       <div className="sky-background" aria-hidden="true"><div className="mist mist-one" /><div className="mist mist-two" /><div className="stardust" /></div>
       <header className="sky-header">
         <div className="brand" aria-label="고양이의 별"><span className="brand-star">✦</span><span>고양이의 별</span><small>CAT&apos;S ORBIT</small></div>
-        <a className="memory-library" href="/memories">다시 보는 기억</a>
+        <nav className="sky-actions" aria-label="주요 기억 동작">
+          <button className="replay-opening" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={replayOpeningStory}>처음 이야기 <span>✦</span></button>
+          <button className="add-memory" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={openCreatorForNewStar}><span>＋</span> 기억별 만들기</button>
+          <a className="memory-library" href="/memories">다시 보는 기억</a>
+        </nav>
       </header>
 
       <section className="star-world" aria-label="스크롤하여 기억별 사이를 걷는 루루의 밤하늘">
@@ -726,7 +853,7 @@ export function SkyScene() {
             })}
           </svg>
 
-          <button className={`main-star${centerOpen ? ' selected' : ''}`} type="button" aria-label={`${catProfile.name}의 중심별 열기`} aria-expanded={centerOpen} onClick={openCenterStar}>
+          <button className={`main-star${centerOpen ? ' selected' : ''}${centerTouched ? ' center-touched' : ''}`} type="button" aria-label={`${catProfile.name}의 중심별 열기`} aria-expanded={centerOpen} onClick={openCenterStar}>
             <span className="main-star-aura" aria-hidden="true" />
             <span className="main-star-ring" aria-hidden="true" />
             <span className="main-star-core" aria-hidden="true">
@@ -761,6 +888,14 @@ export function SkyScene() {
         <span>{currentStory.title}</span>
         <p>{currentStory.body}</p>
       </aside>
+      {openingStoryOpen && <section className="opening-story" role="dialog" aria-modal="true" aria-label="고양이의 별 오프닝 이야기">
+        <div className="opening-story-card">
+          <span>고양이의 별</span>
+          <h1>아주 조용한 밤,<br />작은 별 하나가 먼저 켜졌어요.</h1>
+          <p>루루가 머물렀던 시간은 사라지지 않고, 밤하늘 어딘가에 천천히 남아 있어요. 사진 한 장을 꺼낼 때마다 기억은 별이 되고, 당신은 그 별 사이를 걸어가게 됩니다.</p>
+          <button type="button" onClick={closeOpeningStory}>밤하늘로 들어가기 <b>✦</b></button>
+        </div>
+      </section>}
       <aside className={`memory-detail${detailVisible ? ' visible' : ''}${selected && photoUrls[selected.id]?.[0] ? ' filled-detail' : ' empty-detail'} ${detailOnRight ? 'visit-right' : 'visit-left'}`} style={detailStyle} aria-live="polite">
         {selected && (() => {
           const photos = photoUrls[selected.id] ?? [];
@@ -794,7 +929,7 @@ export function SkyScene() {
           </>;
         })()}
       </aside>
-      <aside className={`center-star-detail${centerOpen ? ' visible' : ''}${centerEditing ? ' editing' : ''}`} aria-live="polite">
+      <aside className={`center-star-detail${centerOpen ? ' visible' : ''}${centerEditing ? ' editing' : ''}${centerTouched ? ' center-touched' : ''}`} aria-live="polite">
         {centerOpen && (centerEditing ? <form className="center-profile-form" onSubmit={saveCatProfileDetails}>
           <button className="center-close" type="button" aria-label="고양이별 편집 닫기" onClick={() => setCenterEditing(false)}>×</button>
           <figure className="center-profile-photo">
@@ -816,37 +951,36 @@ export function SkyScene() {
             <Image src={profilePortraitUrl ?? '/assets/mock-memory-window.png'} alt={`${catProfile.name}의 대표 사진`} fill sizes="180px" unoptimized />
             <figcaption>{catProfile.name}의 중심별</figcaption>
           </figure>
-          <div>
+          <div className="center-copy">
             <span>{catProfile.name}의 별</span><h2>{catProfile.name}의 중심별</h2>
             <p>{catProfile.description}</p>
             <dl>
-              <div><dt>함께한 시간</dt><dd>{togetherDays ? `${togetherDays.toLocaleString('ko-KR')}일째` : '아직 입력 전'}</dd></div>
-              <div><dt>담긴 기억</dt><dd>{filledMemoryStars.length}개의 별 · 사진 {totalPhotoCount}장</dd></div>
-              <div><dt>첫 기억</dt><dd>{firstMemory ? `${firstMemory.date}부터` : displayDate(catProfile.metDate)}</dd></div>
-              <div><dt>최근 기억</dt><dd>{recentMemory ? recentMemory.date : '아직 준비 중'}</dd></div>
-              <div><dt>자주 빛난 활동</dt><dd>{topActivity}</dd></div>
-              <div><dt>생일</dt><dd>{catProfile.birthday ? displayDate(catProfile.birthday) : '아직 입력 전'}</dd></div>
+              <div><dt>함께 머문 날</dt><dd>{togetherDays ? `${togetherDays.toLocaleString('ko-KR')}일의 온기` : '아직 입력 전'}</dd></div>
+              <div><dt>밝혀둔 기억</dt><dd>{filledMemoryStars.length}개의 별 · 사진 {totalPhotoCount}장</dd></div>
+              <div><dt>처음 켜진 빛</dt><dd>{firstMemory ? `${firstMemory.date}부터` : displayDate(catProfile.metDate)}</dd></div>
+              <div><dt>가장 최근의 별</dt><dd>{recentMemory ? recentMemory.date : '아직 준비 중'}</dd></div>
+              <div><dt>자주 빛난 순간</dt><dd>{topActivity}</dd></div>
+              <div><dt>생일의 자리</dt><dd>{catProfile.birthday ? displayDate(catProfile.birthday) : '아직 입력 전'}</dd></div>
             </dl>
-            <div className="center-actions"><button type="button" onClick={openCenterProfileEdit}>고양이별 수정</button>{firstMemory && <button type="button" onClick={() => { setCenterOpen(false); focusStar(firstMemory.id, firstMemory.depth); }}>첫 기억 만나기</button>}<a href="/memories">다시 보는 기억</a></div>
+            <div className="center-actions"><button type="button" onClick={openCenterProfileEdit}>고양이별 수정</button>{firstMemory && <button type="button" onClick={() => { setCenterOpen(false); focusStar(firstMemory.id, firstMemory.depth); }}>첫 기억 만나기</button>}<button className="touch-star-button" type="button" onClick={touchCenterStar}>별빛 쓰다듬기 <span>✦</span></button></div>
           </div>
         </>)}
       </aside>
-      <aside className={`creation-notice${creationNotice ? ' visible' : ''}`} aria-live="polite">{creationNotice && <><span>새 기억별 {creationNotice.count}개가 생겼어요</span><strong>{creationNotice.name}</strong><small>가장 새로운 별은 밤하늘 안쪽에 놓였어요.</small><button type="button" onClick={() => focusStar(creationNotice.id, allStars.find((star) => star.id === creationNotice.id)?.depth)}>별 위치 보기 <b>✦</b></button></>}</aside>
+      <aside className={`creation-notice${creationNotice ? ' visible' : ''}`} aria-live="polite">{creationNotice && <><span>기억이 별빛이 되었어요</span><strong>{creationNotice.name}</strong><small>{creationNotice.message}</small><button type="button" onClick={() => focusStar(creationNotice.id, allStars.find((star) => star.id === creationNotice.id)?.depth)}>그 별 곁으로 가기 <b>✦</b></button></>}</aside>
       <p className="whisper">함께한 기억은,<br />조금 멀리서도 계속 빛나요.</p>
-      <button className="add-memory" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={openCreatorForNewStar}><span>＋</span> 기억별 만들기</button>
+      {isLocalDevelopment && <div className="dev-memory-tools" aria-label="개발용 기억 테스트 도구"><button className="seed-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={seedTenTestMemories} disabled={seedingTestMemories}>{seedingTestMemories ? '테스트 별 채우는 중' : '사진 10장 테스트'} <span>✦</span></button><button className="clear-test-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={clearTestMemories} disabled={seedingTestMemories}>테스트 별 지우기</button></div>}
       <div className={`creator-backdrop${createOpen ? ' open' : ''}`} role="presentation">
-        <button className="creator-dismiss-layer" type="button" aria-label="만들기 창 바깥을 눌러 닫기" onClick={closeCreator} />
-        <form className="memory-creator" onSubmit={createStars} aria-label="기억별 만들기">
-          <button className="creator-close" type="button" aria-label="만들기 닫기" onClick={closeCreator}>×</button>
-          <span className="creator-kicker">{fillTargetId ? 'FILL MEMORY STAR' : 'NEW MEMORY STAR'}</span><h2>{fillTargetId ? '이 별에 어떤 기억을 담을까요?' : '어떤 기억을 별로 띄울까요?'}</h2>
-          <input ref={fileInputRef} className="photo-file-input" aria-label="이 기억의 사진 선택" type="file" accept="image/*" multiple onChange={handleFilesSelected} />
-          <button className={`photo-drop${pendingFiles.length ? ' ready' : ''}${singlePreview ? ' single-ready' : ''}`} data-photo-count={pendingFiles.length > 1 ? `사진 ${pendingFiles.length}장` : '사진 1장'} type="button" onClick={() => fileInputRef.current?.click()} style={singlePreview ? { '--single-preview': `url(${singlePreview})` } as CSSProperties : undefined}><span>{pendingFiles.length ? `사진 ${pendingFiles.length}장이 이 별 하나에 담겨요` : '이 기억이 담긴 사진을 골라주세요'}</span><small>{pendingFiles.length ? '대표 사진은 별과 앨범에서 먼저 보여요' : '한 장 또는 같은 순간의 여러 장을 선택할 수 있어요'}</small></button>
-          {memoryPreviews.length > 0 && <section className="memory-photo-picks" aria-label="대표 사진 선택"><header><strong>대표 사진 고르기</strong><span>{memoryPreviews.length > 1 ? `총 ${memoryPreviews.length}장이 한 기억별에 함께 저장돼요` : '이 사진이 별의 첫 장면이 돼요'}</span></header><div>{memoryPreviews.map((preview, index) => <button key={preview} type="button" aria-pressed={coverIndex === index} onClick={() => { setCoverIndex(index); setSinglePreview(preview); }} style={{ backgroundImage:`url(${preview})` }}><span>{coverIndex === index ? '대표' : '함께'}</span></button>)}</div>{memoryPreviews.length > 1 && <p className="photo-bundle-note">대표 사진은 바꿀 수 있고, 나머지 사진은 별 상세에서 넘겨볼 수 있어요.</p>}</section>}
+        <button className="creator-dismiss-layer" type="button" aria-label="만들기 창 바깥을 눌러 닫기" onClick={() => closeCreator()} />
+        <form className={`memory-creator${creatingMemory ? ' creating' : ''}`} onSubmit={createStars} aria-label="기억별 만들기">
+          <button className="creator-close" type="button" aria-label="만들기 닫기" onClick={() => closeCreator()} disabled={creatingMemory}>×</button>
+          {creatingMemory && <div className="creation-ritual" aria-live="polite"><span>✦</span><p>기억이 별빛으로 모이고 있어요</p></div>}
+          <span className="creator-kicker">{fillTargetId ? 'FILL MEMORY STAR' : 'NEW MEMORY STAR'}</span><h2>{fillTargetId ? '이 별에 어떤 순간을 담을까요?' : '오늘은 어떤 기억을 별로 띄울까요?'}</h2>
+          <input ref={fileInputRef} className="photo-file-input" aria-label="이 기억의 사진 한 장 선택" type="file" accept="image/*" onChange={handleFilesSelected} />
+          <button className={`photo-drop${pendingFiles.length ? ' ready' : ''}${singlePreview ? ' single-ready' : ''}`} data-photo-count="사진 1장" type="button" onClick={() => fileInputRef.current?.click()} style={singlePreview ? { '--single-preview': `url(${singlePreview})` } as CSSProperties : undefined}><span>{pendingFiles.length ? '이 사진이 별의 첫빛이 돼요' : '별로 남길 사진 한 장을 골라주세요'}</span><small>{pendingFiles.length ? '이 순간 하나가 밤하늘에 천천히 놓여요' : '기억 하나씩, 별 하나씩 밝혀요'}</small></button>
           <fieldset className="activity-picker"><legend>어떤 활동의 기억인가요?</legend>{activityTags.map((activity) => <button key={activity} type="button" aria-pressed={draft.activity === activity} className={`tone-${activityStyles[activity].tone}`} onClick={() => setDraft({ ...draft, activity })}><i className={`tag-star shape-${activityStyles[activity].shape}`} />{activity}</button>)}</fieldset>
           <div className="single-fields"><label><span>기억 이름</span><input value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} placeholder="예: 창가에서 보낸 오후" /></label><label><span>날짜</span><input type="date" value={draft.date} onChange={(event) => setDraft({ ...draft, date: event.target.value })} /></label><label className="note-field"><span>짧은 기억</span><textarea value={draft.note} onChange={(event) => setDraft({ ...draft, note: event.target.value })} placeholder="그날의 온기를 한두 문장으로 남겨요" rows={3} /></label></div>
-          <button className="create-submit" type="submit" disabled={pendingFiles.length === 0}>{fillTargetId ? '이 별에 기억 담기' : '밤하늘에 기억별 띄우기'} <span>✦</span></button>
-          {!fillTargetId && <button className="mock-create" type="button" onClick={createMockMemories}>목업 기억별 20개 띄워보기</button>}
-          <p className="creator-note">이 기기의 미리보기 앨범에도 함께 저장돼요.</p>
+          <button className="create-submit" type="submit" disabled={pendingFiles.length === 0 || creatingMemory}>{creatingMemory ? '별빛이 모이는 중' : fillTargetId ? '이 별에 기억 담기' : '이 기억을 별로 띄우기'} <span>✦</span></button>
+          <p className="creator-note">새 별은 밤하늘과 다시 보는 기억에 함께 머물러요.</p>
         </form>
       </div>
     </main>

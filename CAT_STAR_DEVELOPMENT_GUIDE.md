@@ -515,61 +515,52 @@ Desktop 화면을 단순 축소하지 않는다.
 
 ---
 
-# 13. 사진 대량 업로드 — 핵심 MVP 기능
+# 13. 기억별 하나씩 생성 — 핵심 MVP 기능
 
-많은 사용자는 고양이가 떠난 후  
-기존 사진을 한꺼번에 업로드할 수 있다.
+MVP의 핵심은 많은 사진을 한꺼번에 정리하는 것이 아니라
+사용자가 기억 하나를 꺼내 별 하나로 올리는 경험이다.
 
-따라서 batch upload는 보조 기능이 아니라 **P0 핵심 기능**이다.
+따라서 단일 기억 생성은 보조 기능이 아니라 **P0 핵심 기능**이다.
+대량 업로드는 다룰 범위가 넓고 감정선이 약해질 수 있으므로 MVP 이후로 넘긴다.
 
 ## 13.1 처리 흐름
 
 ```text
-사진 선택
-→ metadata 읽기
-→ 날짜 기준 그룹화
-→ 기억 단위 생성
+사진 한 장 선택
+→ 기억 이름 / 날짜 / 짧은 메모 입력
+→ 활동 태그 선택
 → MemoryStar 생성
-→ 별 위치 자동 생성
-→ 밤하늘 완성
+→ 별 탄생 연출
+→ 고양이가 새 별 곁으로 이동
+→ 새 기억 상세 표시
 ```
 
-## 13.2 그룹화 규칙
+## 13.2 별 배치 규칙
 
-MVP에서는 AI를 사용하지 않는다.
+새 별은 기존 별 사이에 임의로 흩뿌리지 않는다.
+하나씩 쌓이는 느낌을 주기 위해 시간 순서에 따라 조금씩 더 안쪽 또는 먼 깊이에 놓는다.
 
-우선 기준:
+기준:
 
-1. EXIF captured_at
-2. 파일 metadata
-3. 사용자가 지정한 날짜
+1. 한 번의 생성 = 하나의 기억별
+2. 새 별은 기존 별과 겹치지 않게 배치
+3. 별이 많아질수록 밤하늘이 풍성해져야 함
+4. 사용자는 생성 직후 새 별의 위치로 자연스럽게 안내됨
 
-기본적으로:
+대량 업로드나 날짜별 자동 그룹화는 MVP에서 사용하지 않는다.
 
-```text
-같은 날짜의 사진 = 하나의 기억 그룹
-```
-
-단, 하루에 사진이 지나치게 많다면  
-시간 간격을 기준으로 추가 분리할 수 있다.
-
-예:
-
-```text
-4시간 이상 gap → 새 memory group
-```
-
-## 13.3 AI 사용
+## 13.3 AI / 자동 정리
 
 MVP에서는 사용하지 않는다.
 
-향후 AI 기능:
+향후 탐색 가능 기능:
 
 - 고양이 사진 자동 탐지
 - 유사 사진 그룹화
 - burst 정리
 - 대표 사진 추천
 - 짧은 제목 추천
+- 날짜별 batch import
 
 AI가 감정의 중요도를 결정하지 않는다.
 
@@ -986,15 +977,15 @@ No라면 다음 Sprint로 넘어가지 않는다.
 
 ---
 
-## Sprint 4 — Batch Import
+## Sprint 4 — Single Memory Creation Story
 
 구현:
 
-- multi-photo upload
-- metadata parsing
-- date grouping
-- memory group generation
-- automatic star creation
+- one-photo memory creation
+- star birth animation
+- cat travel to the new star
+- chronological star placement
+- creation notice copy
 
 ---
 
