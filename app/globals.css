@@ -2727,3 +2727,571 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   72% { transform:translateY(1px) scale(1) rotate(-.06deg); }
   100% { transform:translateY(2px) scale(1) rotate(0deg); }
 }
+
+/* Illustrated memory-star pass: tiny cat-memory motifs instead of emoji-like dots. */
+.memory-star {
+  --shape-rotate:0deg;
+  --shape-scale:1;
+  --motif-soft:color-mix(in srgb,currentColor 38%,transparent);
+  --motif-glow:color-mix(in srgb,currentColor 52%,transparent);
+}
+
+.memory-star .star-core {
+  width:calc(var(--star-size) * 1.42);
+  height:calc(var(--star-size) * 1.42);
+  overflow:visible;
+  border-radius:50%;
+  background:radial-gradient(circle at 42% 32%,rgba(255,255,238,.96) 0 10%,currentColor 28%,color-mix(in srgb,currentColor 34%,transparent) 58%,transparent 74%);
+  box-shadow:
+    0 0 4px color-mix(in srgb,currentColor 86%,transparent),
+    0 0 12px color-mix(in srgb,currentColor 44%,transparent),
+    0 0 26px rgba(255,198,149,.14);
+  transform:translate(-50%,-50%) rotate(var(--shape-rotate)) scale(var(--shape-scale));
+}
+
+.memory-star .star-core::before,
+.memory-star .star-core::after {
+  content:'';
+  position:absolute;
+  pointer-events:none;
+}
+
+.memory-star .star-core::before {
+  inset:14%;
+  background:linear-gradient(145deg,rgba(255,255,242,.92),currentColor 48%,color-mix(in srgb,currentColor 52%,transparent));
+  filter:drop-shadow(0 0 4px var(--motif-glow));
+}
+
+.memory-star .star-core::after {
+  left:18%;
+  top:16%;
+  width:24%;
+  height:24%;
+  border-radius:50%;
+  background:rgba(255,255,244,.86);
+  box-shadow:0 0 7px rgba(255,242,202,.55);
+  opacity:.78;
+}
+
+.memory-star.shape-dot .star-core::before {
+  inset:28%;
+  border-radius:48% 52% 54% 46%;
+  box-shadow:
+    -3px -4px 0 -1px color-mix(in srgb,currentColor 72%,transparent),
+    0 -5px 0 -1.5px color-mix(in srgb,currentColor 62%,transparent),
+    3px -4px 0 -1px color-mix(in srgb,currentColor 72%,transparent);
+}
+
+.memory-star.shape-four {
+  --shape-rotate:44deg;
+}
+
+.memory-star.shape-four .star-core::before {
+  inset:-8% 27%;
+  border-radius:60% 42%;
+  box-shadow:0 0 0 1px rgba(255,255,239,.12) inset;
+}
+
+.memory-star.shape-four .star-core::after {
+  left:50%;
+  top:50%;
+  width:115%;
+  height:18%;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,238,.9),transparent);
+  opacity:.55;
+  transform:translate(-50%,-50%) rotate(-44deg);
+}
+
+.memory-star.shape-six .star-core::before {
+  inset:5%;
+  border-radius:50%;
+  background:
+    repeating-conic-gradient(from 20deg,color-mix(in srgb,currentColor 88%,rgba(255,255,244,.45)) 0 18deg,color-mix(in srgb,currentColor 36%,transparent) 19deg 32deg),
+    radial-gradient(circle,rgba(255,255,238,.95),currentColor 46%,transparent 70%);
+}
+
+.memory-star.shape-six .star-core::after {
+  left:18%;
+  top:48%;
+  width:70%;
+  height:1px;
+  border-radius:999px;
+  background:rgba(255,253,232,.75);
+  box-shadow:0 -3px 0 -0.5px rgba(255,246,220,.38),0 3px 0 -0.5px rgba(255,246,220,.32);
+  transform:rotate(-25deg);
+}
+
+.memory-star.shape-orb .star-core {
+  width:calc(var(--star-size) * 2.05);
+  height:calc(var(--star-size) * 2.05);
+  opacity:.82;
+}
+
+.memory-star.shape-orb .star-core::before {
+  inset:10%;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 35% 28%,rgba(255,255,239,.95) 0 9%,transparent 10%),
+    radial-gradient(circle at 55% 58%,color-mix(in srgb,currentColor 88%,rgba(255,255,236,.34)),color-mix(in srgb,currentColor 26%,transparent) 64%,transparent 75%);
+}
+
+.memory-star.shape-orb .star-core::after {
+  left:22%;
+  top:22%;
+  width:42%;
+  height:42%;
+  border:1px solid rgba(255,255,232,.32);
+  background:transparent;
+  opacity:.6;
+}
+
+.memory-star.shape-comet .star-core::before {
+  inset:18% 6% 18% 28%;
+  border-radius:58% 44% 48% 58%;
+  clip-path:polygon(0 50%,22% 12%,72% 14%,100% 50%,72% 86%,22% 88%);
+}
+
+.memory-star.shape-comet .star-core::after {
+  left:-92%;
+  top:45%;
+  width:118%;
+  height:16%;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,color-mix(in srgb,currentColor 18%,transparent),rgba(255,248,223,.72));
+  opacity:.62;
+  transform:rotate(-15deg);
+}
+
+.memory-star.shape-flower .star-core::before {
+  inset:18% 8% 18% 16%;
+  border-radius:56% 44% 44% 56%;
+  clip-path:polygon(0 50%,18% 22%,63% 22%,86% 50%,63% 78%,18% 78%);
+}
+
+.memory-star.shape-flower .star-core::after {
+  left:72%;
+  top:38%;
+  width:34%;
+  height:28%;
+  border-radius:8% 70% 8% 70%;
+  background:color-mix(in srgb,currentColor 70%,rgba(255,255,235,.42));
+  box-shadow:none;
+  opacity:.76;
+  transform:rotate(45deg);
+}
+
+.memory-star.shape-crystal .star-core::before {
+  inset:4% 18%;
+  border-radius:18% 18% 46% 46%;
+  clip-path:polygon(50% 0,84% 20%,72% 78%,50% 100%,28% 78%,16% 20%);
+  background:linear-gradient(135deg,rgba(255,255,244,.9),currentColor 42%,color-mix(in srgb,currentColor 30%,transparent));
+}
+
+.memory-star.shape-crystal .star-core::after {
+  left:48%;
+  top:14%;
+  width:1px;
+  height:70%;
+  border-radius:999px;
+  background:rgba(255,255,239,.58);
+  box-shadow:5px 12px 0 -0.5px rgba(255,244,225,.22);
+  transform:rotate(8deg);
+}
+
+.memory-star:hover .star-core,
+.memory-star:focus-visible .star-core {
+  --shape-scale:1.13;
+  filter:brightness(1.08) saturate(1.04);
+}
+
+.memory-star.selected .star-core {
+  --shape-scale:1.28;
+  box-shadow:
+    0 0 7px currentColor,
+    0 0 19px color-mix(in srgb,currentColor 70%,transparent),
+    0 0 42px color-mix(in srgb,currentColor 42%,transparent);
+}
+
+.memory-star.empty .star-core {
+  width:calc(var(--star-size) * 1.05);
+  height:calc(var(--star-size) * 1.05);
+  opacity:.54;
+  filter:saturate(.72);
+}
+
+.memory-star.empty .star-core::before,
+.memory-star.empty .star-core::after {
+  opacity:.55;
+}
+
+.memory-star.filled.created:not(.selected) .star-core {
+  width:calc(var(--star-size) * 1.08);
+  height:calc(var(--star-size) * 1.08);
+  opacity:.78;
+}
+
+.memory-star.filled.created.shape-orb:not(.selected) .star-core {
+  width:calc(var(--star-size) * 1.56);
+  height:calc(var(--star-size) * 1.56);
+}
+
+.memory-star.newly-born .star-core {
+  animation:illustrated-star-birth 2.1s var(--ease-soft) both,natural-twinkle var(--twinkle-duration) ease-in-out 2.1s infinite !important;
+}
+
+@keyframes illustrated-star-birth {
+  0% { opacity:0; filter:brightness(1); transform:translate(-50%,-50%) rotate(var(--shape-rotate)) scale(.22); }
+  45% { opacity:.92; filter:brightness(1.14); transform:translate(-50%,-50%) rotate(var(--shape-rotate)) scale(1.18); }
+  100% { opacity:.82; filter:brightness(1); transform:translate(-50%,-50%) rotate(var(--shape-rotate)) scale(1); }
+}
+
+/* 3D memory-orb pass: remove object motifs and keep stars as polished light spheres. */
+.memory-star {
+  --orb-rim:color-mix(in srgb,currentColor 62%,rgba(255,255,245,.3));
+  --orb-core:color-mix(in srgb,currentColor 82%,rgba(255,252,230,.5));
+  --orb-shadow:color-mix(in srgb,currentColor 28%,rgba(92,83,128,.28));
+}
+
+.memory-star .star-core,
+.memory-star.shape-four .star-core,
+.memory-star.shape-six .star-core,
+.memory-star.shape-orb .star-core,
+.memory-star.shape-comet .star-core,
+.memory-star.shape-flower .star-core,
+.memory-star.shape-crystal .star-core {
+  --shape-rotate:0deg;
+  width:calc(var(--star-size) * 1.62);
+  height:calc(var(--star-size) * 1.62);
+  overflow:visible;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,255,248,.98) 0 8%,rgba(255,249,225,.82) 9% 15%,transparent 16%),
+    radial-gradient(circle at 42% 38%,var(--orb-core) 0 26%,currentColor 43%,var(--orb-shadow) 68%,transparent 76%);
+  box-shadow:
+    inset -2px -3px 5px color-mix(in srgb,currentColor 18%,rgba(39,33,65,.38)),
+    inset 2px 2px 4px rgba(255,255,244,.38),
+    0 0 4px color-mix(in srgb,currentColor 80%,transparent),
+    0 0 15px color-mix(in srgb,currentColor 42%,transparent),
+    0 0 34px rgba(255,197,146,.12);
+  clip-path:none;
+  transform:translate(-50%,-50%) scale(var(--shape-scale));
+}
+
+.memory-star .star-core::before,
+.memory-star.shape-dot .star-core::before,
+.memory-star.shape-four .star-core::before,
+.memory-star.shape-six .star-core::before,
+.memory-star.shape-orb .star-core::before,
+.memory-star.shape-comet .star-core::before,
+.memory-star.shape-flower .star-core::before,
+.memory-star.shape-crystal .star-core::before {
+  content:'';
+  position:absolute;
+  inset:-42%;
+  border-radius:50%;
+  clip-path:none;
+  background:radial-gradient(circle,rgba(255,246,214,.3),rgba(255,210,160,.08) 42%,transparent 68%);
+  filter:blur(5px);
+  opacity:.62;
+  box-shadow:none;
+}
+
+.memory-star .star-core::after,
+.memory-star.shape-dot .star-core::after,
+.memory-star.shape-four .star-core::after,
+.memory-star.shape-six .star-core::after,
+.memory-star.shape-orb .star-core::after,
+.memory-star.shape-comet .star-core::after,
+.memory-star.shape-flower .star-core::after,
+.memory-star.shape-crystal .star-core::after {
+  content:'';
+  position:absolute;
+  left:18%;
+  top:15%;
+  width:32%;
+  height:25%;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,248,.88),rgba(255,251,231,.25) 58%,transparent 72%);
+  box-shadow:0 0 8px rgba(255,246,214,.42);
+  opacity:.82;
+  transform:rotate(-18deg);
+}
+
+.memory-star.shape-orb .star-core {
+  width:calc(var(--star-size) * 2.12);
+  height:calc(var(--star-size) * 2.12);
+}
+
+.memory-star.shape-comet .star-core {
+  box-shadow:
+    inset -2px -3px 5px color-mix(in srgb,currentColor 18%,rgba(39,33,65,.38)),
+    inset 2px 2px 4px rgba(255,255,244,.38),
+    -8px 2px 12px color-mix(in srgb,currentColor 18%,transparent),
+    0 0 15px color-mix(in srgb,currentColor 42%,transparent);
+}
+
+.memory-star.empty .star-core {
+  width:calc(var(--star-size) * 1.18);
+  height:calc(var(--star-size) * 1.18);
+  opacity:.58;
+  filter:saturate(.78) brightness(.96);
+}
+
+.memory-star.filled .star-core,
+.memory-star.filled.created:not(.selected) .star-core {
+  width:calc(var(--star-size) * 1.46);
+  height:calc(var(--star-size) * 1.46);
+  opacity:.86;
+}
+
+.memory-star.filled.created.shape-orb:not(.selected) .star-core {
+  width:calc(var(--star-size) * 1.9);
+  height:calc(var(--star-size) * 1.9);
+}
+
+.memory-star:hover .star-core,
+.memory-star:focus-visible .star-core {
+  --shape-scale:1.13;
+  filter:brightness(1.08) saturate(1.04);
+}
+
+.memory-star.selected .star-core {
+  --shape-scale:1.28;
+}
+
+/* Drag expansion: pulling the sky gently opens the constellation field. */
+.sky-scene {
+  --drag-pull:0;
+  --drag-spread:1;
+}
+
+.sky-scene .star-world {
+  transform:translate(var(--pan-x),var(--pan-y)) scale(calc(var(--cluster-scale) * var(--drag-spread)));
+  transition:transform .38s var(--ease-soft);
+}
+
+.sky-scene:active .star-world {
+  transition-duration:.08s;
+}
+
+.sky-scene .sky-follow-layer {
+  transform:translateX(var(--sky-follow-shift,0vw)) scale(calc(1 + var(--drag-pull) * .018));
+}
+
+.sky-scene .memory-star {
+  transform:translate(-50%,-50%) scale(calc(var(--depth-scale) * (1 + var(--drag-pull) * .055)));
+}
+
+.sky-scene .depth-far {
+  opacity:calc(.1 + var(--dusk-progress,0) * .2 + var(--drag-pull) * .12) !important;
+  transform:translateZ(-170px) scale(calc(1.06 + var(--travel) * .2 + var(--drag-pull) * .08));
+}
+
+.sky-scene .depth-near {
+  opacity:calc(.08 + var(--dusk-progress,0) * .14 + var(--drag-pull) * .16) !important;
+  transform:translateZ(120px) scale(calc(.92 + var(--travel) * .55 + var(--drag-pull) * .1));
+}
+
+.sky-scene .constellations {
+  opacity:calc(.16 + var(--dusk-progress,0) * .48 + var(--drag-pull) * .18);
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .sky-scene .star-world,
+  .sky-scene .sky-follow-layer,
+  .sky-scene .memory-star,
+  .sky-scene .depth-far,
+  .sky-scene .depth-near {
+    transform:none !important;
+  }
+}
+
+/* Memory-orb color system: state leads, activity adds only a soft tint. */
+.memory-star {
+  --activity-tint:#fff4cf;
+  --memory-orb:#fff2c7;
+  --memory-orb-core:#fff9e4;
+  --memory-orb-glow:rgba(255,210,154,.24);
+}
+
+.memory-star.tone-blue { --activity-tint:#d2dcff; }
+.memory-star.tone-lavender { --activity-tint:#dccaf5; }
+.memory-star.tone-gold { --activity-tint:#ffe0a4; }
+.memory-star.tone-peach { --activity-tint:#ffc99e; }
+.memory-star.tone-rose { --activity-tint:#f4b7c3; }
+.memory-star.tone-white { --activity-tint:#fff9ea; }
+.memory-star.tone-cream { --activity-tint:#fff2bf; }
+
+.memory-star.empty {
+  --memory-orb:#fff4d8;
+  --memory-orb-core:#fffdf1;
+  --memory-orb-glow:rgba(218,211,239,.16);
+}
+
+.memory-star.filled {
+  --memory-orb:color-mix(in srgb,var(--activity-tint) 32%,#ffd3a7 68%);
+  --memory-orb-core:color-mix(in srgb,var(--activity-tint) 24%,#fff8dc 76%);
+  --memory-orb-glow:rgba(255,195,142,.26);
+}
+
+.memory-star.filled.created {
+  --memory-orb:color-mix(in srgb,var(--activity-tint) 20%,#ffc28f 80%);
+  --memory-orb-core:#fff1d2;
+  --memory-orb-glow:rgba(255,176,126,.32);
+}
+
+.memory-star.favorite,
+.memory-star.filled.favorite {
+  --memory-orb:#ffe09a;
+  --memory-orb-core:#fff7cf;
+  --memory-orb-glow:rgba(255,203,116,.36);
+}
+
+.memory-star.selected,
+.memory-star.filled.selected {
+  --memory-orb:color-mix(in srgb,var(--activity-tint) 18%,#fff2c8 82%);
+  --memory-orb-core:#fffdf0;
+  --memory-orb-glow:rgba(255,222,166,.46);
+}
+
+.memory-star.newly-born {
+  --memory-orb:#ffc083;
+  --memory-orb-core:#fff0cf;
+  --memory-orb-glow:rgba(255,178,116,.48);
+}
+
+.memory-star .star-core,
+.memory-star.shape-four .star-core,
+.memory-star.shape-six .star-core,
+.memory-star.shape-orb .star-core,
+.memory-star.shape-comet .star-core,
+.memory-star.shape-flower .star-core,
+.memory-star.shape-crystal .star-core {
+  color:var(--memory-orb) !important;
+  background:
+    radial-gradient(circle at 34% 27%,rgba(255,255,248,.98) 0 8%,var(--memory-orb-core) 9% 15%,transparent 16%),
+    radial-gradient(circle at 42% 38%,var(--memory-orb-core) 0 23%,var(--memory-orb) 45%,color-mix(in srgb,var(--memory-orb) 28%,rgba(67,57,96,.44)) 70%,transparent 77%);
+  box-shadow:
+    inset -2px -3px 5px color-mix(in srgb,var(--memory-orb) 17%,rgba(39,33,65,.42)),
+    inset 2px 2px 4px rgba(255,255,244,.4),
+    0 0 4px color-mix(in srgb,var(--memory-orb) 82%,transparent),
+    0 0 15px color-mix(in srgb,var(--memory-orb) 45%,transparent),
+    0 0 34px var(--memory-orb-glow);
+}
+
+.memory-star .star-core::before,
+.memory-star.shape-dot .star-core::before,
+.memory-star.shape-four .star-core::before,
+.memory-star.shape-six .star-core::before,
+.memory-star.shape-orb .star-core::before,
+.memory-star.shape-comet .star-core::before,
+.memory-star.shape-flower .star-core::before,
+.memory-star.shape-crystal .star-core::before {
+  background:radial-gradient(circle,var(--memory-orb-glow),color-mix(in srgb,var(--memory-orb) 14%,transparent) 42%,transparent 68%);
+}
+
+.memory-star.empty .star-core {
+  opacity:.52;
+  filter:saturate(.66) brightness(.96);
+}
+
+.memory-star.filled .star-core {
+  opacity:.88;
+}
+
+.memory-star.favorite .star-core {
+  opacity:.95;
+  filter:saturate(1.05) brightness(1.04);
+}
+
+.memory-star.selected .star-core {
+  filter:saturate(1.08) brightness(1.08);
+}
+
+/* Passing stars should vanish like nearby memory dust, not remain as large planets. */
+.sky-scene .memory-star[data-distance='passed'] {
+  opacity:0 !important;
+  pointer-events:none;
+  filter:blur(5px) saturate(.42) brightness(.78);
+  transition:opacity .22s ease,filter .22s ease,transform .22s ease;
+}
+
+.sky-scene .memory-star[data-distance='passed'] .star-core,
+.sky-scene .memory-star[data-distance='passed']::before,
+.sky-scene .memory-star[data-distance='passed']::after {
+  opacity:0 !important;
+  box-shadow:none !important;
+}
+
+.sky-scene .memory-star[data-distance='close'] .star-core {
+  max-width:24px;
+  max-height:24px;
+}
+
+.sky-scene .memory-star.filled.created:not(.selected) .star-core {
+  max-width:22px;
+  max-height:22px;
+}
+
+/* Soft halo experiment: make memory-star rings feel like mist instead of UI circles. */
+.sky-scene .memory-star .proximity-ring {
+  inset:8px;
+  border:0;
+  border-radius:50%;
+  opacity:.18;
+  transform:scale(.86);
+  background:
+    radial-gradient(circle,transparent 37%,rgba(255,246,218,.06) 52%,transparent 68%),
+    conic-gradient(from 18deg,transparent 0 36deg,rgba(255,241,210,.16) 54deg,transparent 82deg,transparent 146deg,rgba(214,207,240,.1) 176deg,transparent 212deg,transparent 360deg);
+  box-shadow:none;
+  filter:blur(.45px);
+  mask-image:radial-gradient(circle,transparent 0 42%,#000 54%,transparent 73%);
+  transition:opacity .55s var(--ease-soft),transform .55s var(--ease-soft),filter .55s var(--ease-soft);
+}
+
+.sky-scene .memory-star[data-distance='close'] .proximity-ring {
+  opacity:.34;
+  transform:scale(.96);
+  box-shadow:none;
+}
+
+.sky-scene .memory-star[data-distance='close']:hover .proximity-ring,
+.sky-scene .memory-star[data-distance='close']:focus-visible .proximity-ring,
+.sky-scene .memory-star.selected .proximity-ring {
+  opacity:.48;
+  transform:scale(1.04);
+  filter:blur(.3px);
+}
+
+.sky-scene .memory-star[data-distance='close']:not(.dimmed) .proximity-ring::after {
+  inset:-7px;
+  background:radial-gradient(circle,transparent 48%,rgba(255,235,198,.055) 64%,transparent 72%);
+  filter:blur(2px);
+}
+
+.sky-scene .memory-star.empty[data-distance='close'] .proximity-ring,
+.sky-scene .memory-star.filled.created[data-distance='close'] .proximity-ring {
+  border-color:transparent;
+  box-shadow:none;
+}
+
+/* Passing-star afterglow: keep a faint trace a little longer without returning to planet-sized orbs. */
+.sky-scene .memory-star[data-distance='passed'] {
+  opacity:.12 !important;
+  filter:blur(3.8px) saturate(.48) brightness(.82);
+  transition:opacity .46s ease,filter .46s ease,transform .32s ease;
+}
+
+.sky-scene .memory-star[data-distance='passed'] .star-core {
+  opacity:.2 !important;
+  max-width:13px;
+  max-height:13px;
+  box-shadow:0 0 7px color-mix(in srgb,var(--memory-orb) 28%,transparent) !important;
+}
+
+.sky-scene .memory-star[data-distance='passed']::before,
+.sky-scene .memory-star[data-distance='passed']::after,
+.sky-scene .memory-star[data-distance='passed'] .proximity-ring {
+  opacity:0 !important;
+}

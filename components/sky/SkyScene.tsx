@@ -33,14 +33,20 @@ function depthFor(id: number, customDepth?: number) {
 
 function project(x: number, y: number, depth: number, travel: number) {
   const distance = depth - travel;
-  const scale = Math.min(6.4, Math.max(.46, .32 + 1.12 / Math.max(.18, distance + .42)));
+  const projectionScale = Math.min(4.1, Math.max(.46, .32 + 1.12 / Math.max(.22, distance + .46)));
+  const visualScale = Math.min(2.05, projectionScale);
+  const projectedX = 50 + (x - 50) * projectionScale;
+  const projectedY = 46 + (y - 46) * projectionScale;
+  const centerPull = distance >= .02 && distance <= .82 ? Math.max(0, 1 - Math.abs(distance - .34) / .72) * .2 : 0;
+  const passedFade = distance <= -.3 ? 0 : distance < .12 ? Math.max(0, (distance + .3) / .42) : 1;
+  const farFade = Math.min(1, .36 + visualScale * .34);
   return {
     distance,
-    scale,
-    x: 50 + (x - 50) * scale,
-    y: 46 + (y - 46) * scale,
-    opacity: distance < -.44 ? 0 : distance < .08 ? Math.max(0, (distance + .44) / .52) : Math.min(1, .35 + scale * .38),
-    selectable: distance >= .06 && distance <= .66,
+    scale: visualScale,
+    x: projectedX + (50 - projectedX) * centerPull,
+    y: projectedY + (46 - projectedY) * centerPull,
+    opacity: passedFade * farFade,
+    selectable: distance >= .08 && distance <= .66,
   };
 }
 
@@ -131,10 +137,9 @@ const defaultCatProfile: CatProfile = {
   description: '한 장면을 담은 기억별과 달리, 이 별은 모든 기억이 돌아오는 중심이에요. 함께한 시간 전체를 조용히 품고 있어요.',
 };
 
-const createdStarPath = [
-  [42, 38], [58, 35], [35, 48], [66, 47], [49, 58], [28, 40],
-  [74, 56], [39, 66], [61, 64], [22, 56], [78, 34], [51, 27],
-];
+const RECENT_CREATED_PLACES = [
+  [52, 42], [43, 48], [61, 49], [36, 39], [69, 39], [49, 58],
+] as const;
 
 const TEST_SEED_MARKER = '[cat-star-test-seed]';
 const OPENING_STORY_SEEN = 'cat-star-opening-story-seen';
@@ -153,17 +158,47 @@ const testMemorySeeds: Array<{ name: string; date: string; note: string; activit
   { name: '테스트 10 · 손끝 온기', date: '2020-04-02', note: '열 번째 사진까지 넣었을 때 하늘이 복잡하지 않은지 보는 마지막 별이에요.', activity: '낮잠', palette: ['#706395', '#f0beb0', '#fff5cf'] },
 ];
 
-function nextCreatedStarPlace(ordinal: number) {
-  const [baseX, baseY] = createdStarPath[ordinal % createdStarPath.length];
-  const lap = Math.floor(ordinal / createdStarPath.length);
-  const drift = Math.min(5, lap * 1.4);
-  const direction = ordinal % 2 === 0 ? -1 : 1;
+function memoryDateSortValue(star: MemoryStarData) {
+  const input = dateInputFromDisplay(star.date) || star.date.replaceAll('. ', '-');
+  const value = new Date(`${input}T00:00:00`).getTime();
+  return Number.isFinite(value) ? value : 0;
+}
+
+function createdStarPlace(rankFromNewest: number, total: number, id: number) {
+  if (rankFromNewest < RECENT_CREATED_PLACES.length) {
+    const [x, y] = RECENT_CREATED_PLACES[rankFromNewest];
+    return {
+      x,
+      y,
+      depth: .98 + rankFromNewest * .09,
+      size: Math.max(7, 10 - rankFromNewest % 3),
+    };
+  }
+
+  const progress = total <= 1 ? 0 : rankFromNewest / Math.max(1, total - 1);
+  const theta = ((rankFromNewest * 137.508 + (id % 9) * 13 - 94) * Math.PI) / 180;
+  const radiusX = 22 + Math.pow(progress, .68) * 54;
+  const radiusY = 13 + Math.pow(progress, .72) * 34;
+  const edgeDrift = Math.min(1, Math.max(0, (rankFromNewest - 8) / 18));
+  const x = 50 + Math.cos(theta) * radiusX * (1 + edgeDrift * .18);
+  const y = 43 + Math.sin(theta) * radiusY + progress * 13;
+
   return {
-    x: Math.max(14, Math.min(86, baseX + direction * drift)),
-    y: Math.max(22, Math.min(74, baseY + Math.sin((ordinal + 1) * 1.7) * 2.8)),
-    depth: Math.min(2.12, 1.38 + ordinal * .055),
-    size: 7 + ordinal % 3,
+    x: Math.max(-12, Math.min(112, x)),
+    y: Math.max(14, Math.min(84, y)),
+    depth: Math.min(2.24, 1.38 + Math.pow(progress, .74) * .76 + rankFromNewest * .025),
+    size: 6 + (id + rankFromNewest) % 4,
   };
+}
+
+function layoutCreatedStars(stars: MemoryStarData[]) {
+  const ranked = [...stars].sort((a, b) => memoryDateSortValue(b) - memoryDateSortValue(a) || b.id - a.id);
+  const rankById = new Map(ranked.map((star, index) => [star.id, index]));
+  return stars.map((star) => {
+    const rank = rankById.get(star.id) ?? 0;
+    const place = createdStarPlace(rank, stars.length, star.id);
+    return { ...star, ...place, created: true };
+  });
 }
 
 export function SkyScene() {
@@ -218,6 +253,8 @@ export function SkyScene() {
   const allStars = [...baseStars, ...addedStars];
   const selected = allStars.find((star) => star.id === selectedId);
   const projected = allStars.map((star) => ({ star, ...project(star.x, star.y, depthFor(star.id, star.depth), travel) }));
+  const dragPull = Math.min(1, Math.hypot(pan.x / 120, pan.y / 80));
+  const dragSpread = 1 + dragPull * .045;
   const selectedProjection = selected ? projected.find((item) => item.star.id === selected.id) : null;
   const detailVisible = Boolean(selected && detailReady);
   const detailOnRight = !selectedProjection || selectedProjection.x < 52;
@@ -351,7 +388,7 @@ export function SkyScene() {
       const personalMemories = stored.filter((memory) => !memory.testSeed && !memory.note.startsWith(TEST_SEED_MARKER));
       setPersonalMemoryCount(personalMemories.length);
       setFilledStars(Object.fromEntries(storedBaseStars.map((memory) => [memory.id, memory.star])));
-      setAddedStars(storedAddedStars.map((memory) => memory.star));
+      setAddedStars(layoutCreatedStars(storedAddedStars.map((memory) => memory.star)));
       setAddedNotes(Object.fromEntries(stored.map((memory) => [memory.id, readableMemoryNote(memory.note)])));
       setPhotoUrls(Object.fromEntries(stored.map((memory) => {
         const photos = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
@@ -759,33 +796,32 @@ export function SkyScene() {
       return;
     }
     const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
-    const ordinal = allStars.filter((star) => star.created).length;
-    const place = nextCreatedStarPlace(ordinal);
     const style = activityStyles[source.activity ?? '함께한 일상'];
     const created: MemoryStarData = {
       id: nextId,
       name: source.name,
       date: source.date.replaceAll('-', '. '),
-      x: place.x,
-      y: place.y,
-      size: place.size,
+      x: 50,
+      y: 42,
+      size: 8,
       shape: style.shape,
       tone: style.tone,
       activity: source.activity ?? undefined,
-      depth: place.depth,
+      depth: 1,
       photoCount: 1,
       created: true,
     };
+    const createdWithPlace = layoutCreatedStars([...addedStars, created]).find((star) => star.id === created.id) ?? created;
     const note = draft.note.trim() || '이 순간이 밤하늘에 새 별로 머물러요.';
-    await saveStoredMemories([{ id: created.id, star: created, note, photos: [source.file], createdAt: new Date().toISOString() }]);
-    setAddedStars((stars) => [...stars, created]);
-    setPhotoUrls((current) => ({ ...current, [created.id]: source.preview ? [source.preview] : [] }));
-    setAddedNotes((current) => ({ ...current, [created.id]: note }));
+    await saveStoredMemories([{ id: createdWithPlace.id, star: createdWithPlace, note, photos: [source.file], createdAt: new Date().toISOString() }]);
+    setAddedStars((stars) => layoutCreatedStars([...stars, createdWithPlace]));
+    setPhotoUrls((current) => ({ ...current, [createdWithPlace.id]: source.preview ? [source.preview] : [] }));
+    setAddedNotes((current) => ({ ...current, [createdWithPlace.id]: note }));
     setPersonalMemoryCount((count) => count + 1);
-    setBornIds([created.id]);
+    setBornIds([createdWithPlace.id]);
     setCreationNotice(isFirstPersonalMemory
-      ? { id: created.id, name: created.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
-      : { id: created.id, name: created.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
+      ? { id: createdWithPlace.id, name: createdWithPlace.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
+      : { id: createdWithPlace.id, name: createdWithPlace.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
     setTimeout(() => setBornIds([]), 2800);
     setTimeout(() => setCreationNotice(null), 6800);
     await wait(980);
@@ -794,7 +830,7 @@ export function SkyScene() {
     setPendingFiles([]);
     setSinglePreview(null);
     setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
-    focusStar(created.id, created.depth);
+    focusStar(createdWithPlace.id, createdWithPlace.depth);
   }
 
   async function seedTenTestMemories() {
@@ -808,34 +844,35 @@ export function SkyScene() {
 
       const existingStars = [...memoryStars, ...preserved.map((memory) => memory.star)];
       const firstId = Math.max(20, ...existingStars.map((star) => star.id)) + 1;
-      const ordinalStart = existingStars.filter((star) => star.created).length;
       const createdAt = new Date().toISOString();
       const seeded = testMemorySeeds.map((seed, index) => {
-        const place = nextCreatedStarPlace(ordinalStart + index);
         const style = activityStyles[seed.activity];
         const star: MemoryStarData = {
           id: firstId + index,
           name: seed.name,
           date: seed.date.replaceAll('-', '. '),
-          x: place.x,
-          y: place.y,
-          size: place.size,
+          x: 50,
+          y: 42,
+          size: 8,
           shape: style.shape,
           tone: style.tone,
           activity: seed.activity,
-          depth: place.depth,
+          depth: 1,
           photoCount: 1,
           created: true,
         };
         return { id: star.id, star, note: seed.note, photos: [makeTestMemoryPhoto(seed, index)], createdAt, testSeed: true };
       });
 
-      await saveStoredMemories(seeded);
-      setAddedStars([...preserved.filter((memory) => memory.id > 20).map((memory) => memory.star), ...seeded.map((memory) => memory.star)]);
+      const preservedAdded = preserved.filter((memory) => memory.id > 20).map((memory) => memory.star);
+      const laidOutSeedStars = layoutCreatedStars([...preservedAdded, ...seeded.map((memory) => memory.star)]);
+      const laidOutSeeded = seeded.map((memory) => ({ ...memory, star: laidOutSeedStars.find((star) => star.id === memory.id) ?? memory.star }));
+      await saveStoredMemories(laidOutSeeded);
+      setAddedStars(laidOutSeedStars);
       setFilledStars(Object.fromEntries(preserved.filter((memory) => memory.id <= 20).map((memory) => [memory.id, memory.star])));
-      setAddedNotes(Object.fromEntries([...preserved, ...seeded].map((memory) => [memory.id, readableMemoryNote(memory.note)])));
-      setPhotoUrls(Object.fromEntries([...preserved, ...seeded].map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
-      setBornIds(seeded.map((memory) => memory.id));
+      setAddedNotes(Object.fromEntries([...preserved, ...laidOutSeeded].map((memory) => [memory.id, readableMemoryNote(memory.note)])));
+      setPhotoUrls(Object.fromEntries([...preserved, ...laidOutSeeded].map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
+      setBornIds(laidOutSeeded.map((memory) => memory.id));
       setCreationNotice({ id: seeded[seeded.length - 1].id, name: '테스트 사진 10장', message: '사진을 하나씩 넣었을 때 생기는 별 10개를 채웠어요.' });
       setTimeout(() => setBornIds([]), 3200);
       setTimeout(() => setCreationNotice(null), 7600);
@@ -857,7 +894,7 @@ export function SkyScene() {
       const testSeeds = stored.filter((memory) => memory.testSeed || memory.note.startsWith(TEST_SEED_MARKER));
       const preserved = stored.filter((memory) => !memory.testSeed && !memory.note.startsWith(TEST_SEED_MARKER));
       await Promise.all(testSeeds.map((memory) => deleteStoredMemory(memory.id)));
-      setAddedStars(preserved.filter((memory) => memory.id > 20).map((memory) => memory.star));
+      setAddedStars(layoutCreatedStars(preserved.filter((memory) => memory.id > 20).map((memory) => memory.star)));
       setFilledStars(Object.fromEntries(preserved.filter((memory) => memory.id <= 20).map((memory) => [memory.id, memory.star])));
       setAddedNotes(Object.fromEntries(preserved.map((memory) => [memory.id, readableMemoryNote(memory.note)])));
       setPhotoUrls(Object.fromEntries(preserved.map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
@@ -952,7 +989,7 @@ export function SkyScene() {
   }
 
   return (
-    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={{ '--travel': travel, '--dusk-progress': duskProgress, '--end-warmth': endWarmth, '--pan-x':`${pan.x}px`, '--pan-y':`${pan.y}px`, '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`, '--cat-visit-shift': `${catVisitShift}vw`, '--sky-follow-shift': `${skyFollowShift}vw`, '--cat-lean': `${catLean}deg`, '--cat-counter-lean': `${-catLean * .6}deg`, '--cat-step-x': `${catStep}px` } as CSSProperties}>
+    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={{ '--travel': travel, '--dusk-progress': duskProgress, '--end-warmth': endWarmth, '--pan-x':`${pan.x}px`, '--pan-y':`${pan.y}px`, '--drag-pull': dragPull, '--drag-spread': dragSpread, '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`, '--cat-visit-shift': `${catVisitShift}vw`, '--sky-follow-shift': `${skyFollowShift}vw`, '--cat-lean': `${catLean}deg`, '--cat-counter-lean': `${-catLean * .6}deg`, '--cat-step-x': `${catStep}px` } as CSSProperties}>
       <CatStarOpening open={imageOpeningOpen} onComplete={completeImageOpening} />
       <div className="sky-background" aria-hidden="true"><div className="mist mist-one" /><div className="mist mist-two" /><div className="stardust" /></div>
       <header className="sky-header">

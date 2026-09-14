@@ -248,3 +248,105 @@
 - `node node_modules\typescript\bin\tsc --noEmit` passed.
 - `pnpm run build` passed.
 - `git diff --check` passed.
+
+## 2026-09-14 - 기억별 일러스트 모양 1차 적용
+
+- 밤하늘의 기억별이 단순 원형/이모티콘처럼 보이지 않도록 CSS 기반 일러스트 별 레이어를 추가했다.
+- 기존 `dot`, `four`, `six`, `orb`, `comet`, `flower`, `crystal` 형태를 유지하되 각각 발자국, 별빛, 실뭉치, 부드러운 달빛, 꼬리별, 생선/간식, 크리스털 느낌으로 보이게 조정했다.
+- 생성되는 별과 테스트 별도 같은 `.star-core` 구조를 사용하므로 새 모양이 자동 적용된다.
+- PNG 이미지를 여러 장 늘리지 않고 CSS/SVG 질감으로 구현해 작은 크기와 모바일 확대/축소에서 흐려지지 않게 했다.
+- 로컬 미리보기에서 별 모양이 이모티콘이 아니라 배경에 섞이는 작은 일러스트 형태로 렌더링되는 것을 확인했다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+
+## 2026-09-14 - 기억별 3D 구체화와 드래그 확장감
+
+- 고양이 물건 실루엣처럼 보이던 기억별 모양을 제거하고, 작은 3D 빛 구체 스타일로 통일했다.
+- 활동별 shape는 데이터 구조로 유지하되, 화면에서는 색조와 크기 차이 중심으로 표현해 이모티콘/아이콘 느낌을 줄였다.
+- 마우스나 터치로 밤하늘을 옆/위아래로 당길 때 `dragPull` 값을 계산해 별자리 공간이 아주 살짝 확장되도록 했다.
+- 드래그 강도에 따라 별자리 레이어, 기억별, 원근 먼지, 별자리 선이 미세하게 커지고 선명해져 공간을 잡아당기는 느낌을 준다.
+- `prefers-reduced-motion`에서는 드래그 확장 transform을 제거해 움직임 부담을 줄였다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
+
+## 2026-09-14 - 기억별 상태별 컬러 체계 적용
+
+- 기억별 색상을 무지개식 활동 분류가 아니라 상태 중심으로 정리했다.
+- 비어 있는 별은 희미한 아이보리, 사진이 담긴 별은 따뜻한 크림/복숭아 계열, 새로 생성된 별은 살구빛, 특별한 별은 골드빛으로 보이게 했다.
+- 활동별 `tone-*` 값은 유지하되 전체 색을 갈라놓지 않고 구체 내부에 약한 틴트로만 섞이게 했다.
+- 선택한 별은 중심부가 흰빛에 가까워지고 외곽이 따뜻하게 빛나도록 조정했다.
+- 3D 구체 스타일의 광원, 내부 그림자, 외곽 글로우가 상태별 색을 따라가도록 CSS 변수를 정리했다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
+
+## 2026-09-14 - 생성 기억별 시간 기반 배치 알고리즘
+
+- 새 기억별 배치를 고정 좌표 배열에서 시간 기반 배치 규칙으로 바꿨다.
+- 생성된 기억별은 날짜가 최신일수록 가까운 깊이와 중앙에 가까운 위치에 놓이고, 오래된 기억일수록 더 먼 깊이와 좌우/상하 가장자리 쪽에 놓인다.
+- 기존 저장된 생성 별도 화면에 불러올 때 새 규칙으로 재배치해, 테스트 별 10개처럼 여러 별이 있을 때 중앙에 몰려 보이는 현상을 줄였다.
+- 먼 별은 화면 가장자리나 살짝 바깥 좌표까지 허용해 밤하늘이 넓게 이어지는 느낌을 만들었다.
+- 별에 가까워지는 스크롤 구간에서는 투영 위치를 약하게 중앙으로 끌어와, 가장자리의 먼 별도 걸어가며 시야 중심으로 다가오는 느낌을 추가했다.
+- 테스트 별 생성과 테스트 별 삭제 흐름도 새 배치 규칙을 사용하도록 맞췄다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
+
+## 2026-09-14 - 지나간 기억별 크기와 사라짐 보정
+
+- 스크롤로 별에 가까워졌을 때 기억별이 행성처럼 과하게 커지고 지나간 뒤에도 남아 보이던 문제를 수정했다.
+- 투영 계산에서 위치 확대와 실제 별 크기 확대를 분리하고, 기억별의 최대 시각 크기를 낮췄다.
+- 별이 시야를 지나가면 더 빠르게 opacity가 0이 되도록 fade 구간을 좁혔다.
+- `data-distance='passed'` 상태의 별은 glow와 core까지 투명하게 처리해 스크롤로 들어간 별이 확실히 사라지게 했다.
+- 가까운 생성 별도 최대 크기를 제한해 큰 행성처럼 보이지 않게 했다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
+
+## 2026-09-14 - 기억별 테두리 소프트 halo 실험
+
+- 기억별 주변의 또렷한 원형 테두리가 UI 링처럼 보여서, 기존 코드는 남겨둔 채 하단 오버라이드 블록으로만 부드럽게 실험했다.
+- `.proximity-ring`의 border를 제거하고, 흐린 radial/conic gradient와 mask로 안개 같은 halo가 보이도록 했다.
+- 가까운 별, hover/focus/selected 상태에서는 halo가 조금 더 보이지만 선명한 원으로 보이지 않게 opacity와 blur를 낮췄다.
+- 원복이 필요하면 `Soft halo experiment` CSS 블록만 제거하면 기존 테두리 스타일로 돌아갈 수 있다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
+
+## 2026-09-14 - 지나간 기억별 잔광 보정
+
+- 직전 보정에서 별이 너무 빨리 사라지는 느낌이 있어 fade 구간을 조금 넓혔다.
+- 지나간 별은 완전히 즉시 사라지지 않고, 아주 작은 흐린 잔광으로 잠깐 남도록 했다.
+- 큰 구체나 원형 테두리가 남지 않도록 passed 상태의 core 최대 크기와 halo opacity는 계속 제한했다.
+
+### Verification
+
+- `node node_modules\typescript\bin\tsc --noEmit` passed.
+- `pnpm run build` passed.
+- `git diff --check` passed.
+- `http://localhost:3000/?center-image-check=2` returned 200.
