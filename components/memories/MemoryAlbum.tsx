@@ -8,15 +8,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { activityFor, activityStyles, activityTags, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredMemories, MEMORY_STORE_CHANGED, updateStoredMemory } from '@/lib/memory-store';
 
-type AlbumMemory = { id: string; starId: number; name: string; date: string; note: string; activity: ActivityTag; images: string[]; photos?: Blob[]; uploaded?: boolean; star?: MemoryStarData };
-
-const mockMemories: AlbumMemory[] = [
-  { id: 'mock-window', starId: 1, name: '창가의 늦은 오후', date: '2018. 05. 12', note: '햇빛이 길게 머물던 창가에서 함께 보낸 조용한 오후.', activity: '창가 구경', images: ['/assets/mock-memory-window.png'] },
-  { id: 'mock-rain', starId: 2, name: '비가 오던 저녁', date: '2020. 09. 03', note: '빗소리와 작은 숨소리가 방 안을 따뜻하게 채우던 저녁.', activity: '낮잠', images: ['/assets/mock-memory-rain.png'] },
-];
+type AlbumMemory = { id: string; starId: number; name: string; date: string; note: string; activity: ActivityTag; images: string[]; photos?: Blob[]; uploaded?: boolean; testSeed?: boolean; source: 'personal' | 'test'; star?: MemoryStarData };
 
 export function MemoryAlbum() {
-  const [memories, setMemories] = useState<AlbumMemory[]>(mockMemories);
+  const [memories, setMemories] = useState<AlbumMemory[]>([]);
   const [selected, setSelected] = useState<AlbumMemory | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
@@ -35,10 +30,10 @@ export function MemoryAlbum() {
         if (!active) return;
         const uploaded = stored.map((memory): AlbumMemory => {
           const images = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
-          return { id: `stored-${memory.id}`, starId: memory.id, name: memory.star.name, date: memory.star.date, note: memory.note, activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, star: memory.star };
+          const testSeed = Boolean(memory.testSeed || memory.note.startsWith('[cat-star-test-seed]'));
+          return { id: `stored-${memory.id}`, starId: memory.id, name: memory.star.name, date: memory.star.date, note: memory.note.replace('[cat-star-test-seed] ', ''), activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, testSeed, source: testSeed ? 'test' : 'personal', star: memory.star };
         });
-        const seen = new Set(uploaded.map((memory) => `${memory.name}-${memory.date}`));
-        setMemories([...uploaded, ...mockMemories.filter((memory) => !seen.has(`${memory.name}-${memory.date}`))]);
+        setMemories(uploaded);
       }).catch(() => undefined);
     }
     function handleStorage(event: StorageEvent) {
@@ -55,13 +50,23 @@ export function MemoryAlbum() {
     };
   }, []);
 
+  const personalMemories = useMemo(() => memories.filter((memory) => memory.source === 'personal'), [memories]);
+  const testMemories = useMemo(() => memories.filter((memory) => memory.source === 'test'), [memories]);
+  const albumSource = personalMemories.length ? personalMemories : [];
+  const isFirstPersonalMemory = personalMemories.length === 1;
+  const albumIntro = personalMemories.length === 0
+    ? '아직 다시 볼 기억별이 없어요. 사진 한 장을 남기면 이곳에 첫 별의 장면이 조용히 모여요.'
+    : isFirstPersonalMemory
+      ? '첫 기억별이 이곳에 머물고 있어요. 이 별에서 루루의 밤하늘이 시작됐어요.'
+      : '밤하늘에 올려둔 순간들을 조용히 다시 만나는 자리예요.';
+
   const visibleMemories = useMemo(() => {
     const keyword = query.trim().toLocaleLowerCase('ko');
-    return memories.filter((memory) => (activityFilter === '전체' || memory.activity === activityFilter) && (!keyword || `${memory.name} ${memory.note} ${memory.date} ${memory.activity}`.toLocaleLowerCase('ko').includes(keyword))).sort((a, b) => {
+    return albumSource.filter((memory) => (activityFilter === '전체' || memory.activity === activityFilter) && (!keyword || `${memory.name} ${memory.note} ${memory.date} ${memory.activity}`.toLocaleLowerCase('ko').includes(keyword))).sort((a, b) => {
       const order = a.date.localeCompare(b.date);
       return sort === 'newest' ? -order : order;
     });
-  }, [memories, query, sort, activityFilter]);
+  }, [albumSource, query, sort, activityFilter]);
 
   function openMemory(memory: AlbumMemory) {
     setSelected(memory);
@@ -93,12 +98,12 @@ export function MemoryAlbum() {
     setMemories((items) => items.filter((item) => item.id !== selected.id)); setDeleteOpen(false); setSelected(null);
   }
 
-  return <main className="memory-gallery-page">
-    <header className="gallery-header"><a href="/" aria-label="별자리로 돌아가기">← 별자리로 돌아가기</a><div><span>MEMORY ALBUM</span><h1>다시 보는 기억</h1><p>밤하늘에 올려둔 순간들을 조용히 다시 만나는 자리예요.</p></div></header>
-    <section className="album-tools" aria-label="기억 찾기와 정렬"><label><span className="sr-only">기억 검색</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 메모, 활동으로 기억 찾기" /></label><div role="group" aria-label="날짜 정렬"><button type="button" aria-pressed={sort === 'newest'} onClick={() => setSort('newest')}>최근에 밝힌 별</button><button type="button" aria-pressed={sort === 'oldest'} onClick={() => setSort('oldest')}>오래된 별부터</button></div></section>
-    <nav className="activity-filters" aria-label="활동 태그 필터">{(['전체', ...activityTags] as const).map((activity) => <button key={activity} type="button" aria-pressed={activityFilter === activity} onClick={() => setActivityFilter(activity)}>{activity}</button>)}</nav>
-    {visibleMemories.length ? <section className="memory-gallery" aria-label="기억 사진 모음">{visibleMemories.map((memory, index) => <article key={memory.id} className={`gallery-card card-${index + 1}`}><button className="gallery-card-open" type="button" onClick={() => openMemory(memory)} aria-label={`${memory.name} 자세히 보기`}><figure>{memory.images[0] ? <Image src={memory.images[0]} alt={`${memory.name}의 고양이 사진`} fill sizes="(max-width: 720px) 92vw, 45vw" priority={index === 0} unoptimized={memory.uploaded} /> : <span className="gallery-image-placeholder">✦</span>}</figure><div><time>{memory.date}</time><h2>{memory.name}</h2><p>{memory.note}</p><span>이 별 곁에 머물기 · ✦</span></div></button></article>)}</section> : <p className="album-empty">찾으시는 기억이 아직 이 밤하늘에는 없어요.</p>}
-    <p className="gallery-footnote">새로 밝힌 기억별도 이곳에 조용히 이어져요.</p>
+  return <main className={`memory-gallery-page${isFirstPersonalMemory ? ' first-memory-album' : ''}${personalMemories.length === 0 ? ' empty-personal-album' : ''}`}>
+    <header className="gallery-header"><a href="/" aria-label="별자리로 돌아가기">← 별자리로 돌아가기</a><div><span>{isFirstPersonalMemory ? 'FIRST MEMORY ALBUM' : 'MEMORY ALBUM'}</span><h1>{isFirstPersonalMemory ? '첫 별의 기록' : '다시 보는 기억'}</h1><p>{albumIntro}</p>{testMemories.length > 0 && <small className="album-dev-note">개발 테스트 별 {testMemories.length}개는 실제 앨범 판단에서 제외했어요.</small>}</div></header>
+    {personalMemories.length > 0 && <><section className="album-tools" aria-label="기억 찾기와 정렬"><label><span className="sr-only">기억 검색</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="이름, 메모, 활동으로 기억 찾기" /></label><div role="group" aria-label="날짜 정렬"><button type="button" aria-pressed={sort === 'newest'} onClick={() => setSort('newest')}>최근에 밝힌 별</button><button type="button" aria-pressed={sort === 'oldest'} onClick={() => setSort('oldest')}>오래된 별부터</button></div></section>
+    <nav className="activity-filters" aria-label="활동 태그 필터">{(['전체', ...activityTags] as const).map((activity) => <button key={activity} type="button" aria-pressed={activityFilter === activity} onClick={() => setActivityFilter(activity)}>{activity}</button>)}</nav></>}
+    {visibleMemories.length ? <section className="memory-gallery" aria-label="기억 사진 모음">{visibleMemories.map((memory, index) => <article key={memory.id} className={`gallery-card card-${index + 1}${isFirstPersonalMemory ? ' first-memory-card' : ''}`}><button className="gallery-card-open" type="button" onClick={() => openMemory(memory)} aria-label={`${memory.name} 자세히 보기`}><figure>{memory.images[0] ? <Image src={memory.images[0]} alt={`${memory.name}의 고양이 사진`} fill sizes="(max-width: 720px) 92vw, 45vw" priority={index === 0} unoptimized={memory.uploaded} /> : <span className="gallery-image-placeholder">✦</span>}</figure><div><time>{memory.date}</time><h2>{memory.name}</h2><p>{memory.note}</p><span>{isFirstPersonalMemory ? '이 별에서 밤하늘이 시작됐어요 · ✦' : '이 별 곁에 머물기 · ✦'}</span></div></button></article>)}</section> : <section className="album-empty"><span>아직 다시 볼 기억별이 없어요</span><p>사진 한 장을 남기면, 이곳에 첫 별의 장면이 조용히 모여요.</p><a href="/">첫 기억별 만들러 가기 <b>✦</b></a>{testMemories.length > 0 && <small>테스트 별 {testMemories.length}개는 개발용으로만 남겨두었어요.</small>}</section>}
+    {personalMemories.length > 0 && <p className="gallery-footnote">{isFirstPersonalMemory ? '첫 별은 혼자 있어도 충분히 밝아요. 다음 기억을 남기면 이곳에 천천히 이어져요.' : '새로 밝힌 기억별도 이곳에 조용히 이어져요.'}</p>}
 
     <Dialog open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelected(null); }}>
       <DialogContent className="memory-album-dialog" showCloseButton={false}>
