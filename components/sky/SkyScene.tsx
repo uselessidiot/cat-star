@@ -80,18 +80,21 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-type SkyTime = 'afternoon' | 'evening' | 'night';
+type SkyTime = 'morning' | 'afternoon' | 'evening' | 'night';
 
 function skyTimeFromClock(date = new Date()): SkyTime {
   const hour = date.getHours();
-  return hour >= 18 || hour < 6 ? 'night' : 'afternoon';
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 20) return 'evening';
+  return 'night';
 }
 
 function readSkyTimeOverride(): SkyTime | null {
   try {
     const params = new URLSearchParams(window.location.search);
     const value = params.get('sky-time') ?? params.get('sky');
-    if (value === 'night' || value === 'evening' || value === 'afternoon') return value;
+    if (value === 'night' || value === 'evening' || value === 'afternoon' || value === 'morning') return value;
   } catch {
     // URL parameters are unavailable during the first render in some environments.
   }
@@ -156,6 +159,16 @@ const testMemorySeeds: Array<{ name: string; date: string; note: string; activit
   { name: '테스트 08 · 소파 옆자리', date: '2020-03-26', note: '평범한 일상 사진이 작고 따뜻하게 쌓이는지 보는 테스트예요.', activity: '함께한 일상', palette: ['#676d9c', '#efb9a8', '#fff3cc'] },
   { name: '테스트 09 · 해 질 무렵', date: '2020-03-29', note: '저녁빛 사진이 복숭아색으로 너무 튀지 않게 놓이는지 확인해요.', activity: '창가 구경', palette: ['#5d6698', '#f0aa9b', '#ffdba5'] },
   { name: '테스트 10 · 손끝 온기', date: '2020-04-02', note: '열 번째 사진까지 넣었을 때 하늘이 복잡하지 않은지 보는 마지막 별이에요.', activity: '낮잠', palette: ['#706395', '#f0beb0', '#fff5cf'] },
+  { name: '테스트 11 · 문틈 시선', date: '2020-04-06', note: '별이 더 많아져도 시선이 산만하지 않은지 확인해요.', activity: '함께한 일상', palette: ['#60699b', '#d5b2cf', '#fff0c8'] },
+  { name: '테스트 12 · 작은 상자', date: '2020-04-09', note: '놀이 기억이 작은 별 모양으로 과하지 않게 섞이는지 봐요.', activity: '놀이', palette: ['#76609a', '#f3b0a0', '#fff6d7'] },
+  { name: '테스트 13 · 긴 하품', date: '2020-04-13', note: '낮잠 별이 많아져도 부드러운 빛으로 남는지 확인해요.', activity: '낮잠', palette: ['#62719f', '#e9c0b4', '#fff5d6'] },
+  { name: '테스트 14 · 복도 탐험', date: '2020-04-16', note: '외곽 별이 여행감은 주되 화면을 채우지 않는지 보는 테스트예요.', activity: '산책·외출', palette: ['#5d5b91', '#c9b4dd', '#fce0bf'] },
+  { name: '테스트 15 · 노을 수염', date: '2020-04-19', note: 'peach glow가 많은 별 사이에서도 따뜻하게만 남는지 확인해요.', activity: '창가 구경', palette: ['#626a9a', '#efa994', '#ffd8a6'] },
+  { name: '테스트 16 · 밤의 골골송', date: '2020-04-23', note: '어두운 사진 느낌의 기억도 차갑지 않게 보이는지 봐요.', activity: '함께한 일상', palette: ['#535f8f', '#bda9d2', '#f7dbc4'] },
+  { name: '테스트 17 · 리본 그림자', date: '2020-04-26', note: '특별한 날의 별이 튀지 않고 살짝만 깊어지는지 확인해요.', activity: '특별한 날', palette: ['#765c90', '#eba3b5', '#fff0c0'] },
+  { name: '테스트 18 · 간식 소리', date: '2020-04-29', note: '식사 기억의 금빛이 강한 노란색으로 보이지 않는지 봐요.', activity: '식사·간식', palette: ['#73679a', '#efbd7e', '#fff3c5'] },
+  { name: '테스트 19 · 달빛 등', date: '2020-05-03', note: '먼 별이 작고 희미하게 남아 깊이감을 주는지 확인해요.', activity: '함께한 일상', palette: ['#56699a', '#cbb8d9', '#f8e0c9'] },
+  { name: '테스트 20 · 다시 온 밤', date: '2020-05-07', note: '스무 개의 테스트 별이 생겼을 때도 고양이가 머무는 밤처럼 느껴지는지 봐요.', activity: '특별한 날', palette: ['#725e94', '#e8a6bb', '#fff1c8'] },
 ];
 
 function memoryDateSortValue(star: MemoryStarData) {
@@ -271,7 +284,7 @@ export function SkyScene() {
   const storyActive = storyPulse > 0 && atStoryEnd && !detailVisible && !centerOpen && !createOpen && !openingStoryOpen;
   const currentStory = catStoryMessages[storyStep % catStoryMessages.length];
   const endApproach = Math.min(1, Math.max(0, (travel - STORY_APPROACH_START) / (MAX_TRAVEL - STORY_APPROACH_START)));
-  const duskProgress = skyTime === 'night' ? 1 : skyTime === 'evening' ? .58 : 0;
+  const duskProgress = skyTime === 'night' ? 1 : skyTime === 'evening' ? .58 : skyTime === 'morning' ? .12 : .24;
   const journeyText = atStoryEnd ? '밤 끝에서 · 천천히 더 걸으면 작은 말이 떠올라요' : endApproach > .55 ? '말이 떠오르는 밤끝으로 가는 중' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
   const endWarmth = Math.min(1, endApproach * .42 + (atStoryEnd ? endScrolls / 9 * .58 : 0));
   const filledMemoryStars = allStars.filter((star) => (photoUrls[star.id]?.length ?? 0) > 0);
@@ -833,7 +846,7 @@ export function SkyScene() {
     focusStar(createdWithPlace.id, createdWithPlace.depth);
   }
 
-  async function seedTenTestMemories() {
+  async function seedTestMemories() {
     if (seedingTestMemories) return;
     setSeedingTestMemories(true);
     try {
@@ -873,7 +886,7 @@ export function SkyScene() {
       setAddedNotes(Object.fromEntries([...preserved, ...laidOutSeeded].map((memory) => [memory.id, readableMemoryNote(memory.note)])));
       setPhotoUrls(Object.fromEntries([...preserved, ...laidOutSeeded].map((memory) => [memory.id, memory.photos.map((photo) => URL.createObjectURL(photo))])));
       setBornIds(laidOutSeeded.map((memory) => memory.id));
-      setCreationNotice({ id: seeded[seeded.length - 1].id, name: '테스트 사진 10장', message: '사진을 하나씩 넣었을 때 생기는 별 10개를 채웠어요.' });
+      setCreationNotice({ id: seeded[seeded.length - 1].id, name: '테스트 사진 20장', message: '사진을 하나씩 넣었을 때 생기는 별 20개를 채웠어요.' });
       setTimeout(() => setBornIds([]), 3200);
       setTimeout(() => setCreationNotice(null), 7600);
       closeSelectedStar();
@@ -902,7 +915,7 @@ export function SkyScene() {
       setBornIds([]);
       closeSelectedStar();
       setCenterOpen(false);
-      setCreationNotice({ id: memoryStars[0].id, name: '테스트 기억을 지웠어요', message: '사진 10장 테스트로 만든 별만 밤하늘에서 비웠어요.' });
+      setCreationNotice({ id: memoryStars[0].id, name: '테스트 기억을 지웠어요', message: '사진 20장 테스트로 만든 별만 밤하늘에서 비웠어요.' });
       setTimeout(() => setCreationNotice(null), 5200);
     } finally {
       setSeedingTestMemories(false);
@@ -1148,7 +1161,7 @@ export function SkyScene() {
         <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={openCreatorForNewStar}>첫 기억별 만들기 <b>✦</b></button>
       </aside>}
       <p className="whisper">함께한 기억은,<br />조금 멀리서도 계속 빛나요.</p>
-      {isLocalDevelopment && <div className="dev-memory-tools" aria-label="개발용 기억 테스트 도구"><button className="seed-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={seedTenTestMemories} disabled={seedingTestMemories}>{seedingTestMemories ? '테스트 별 채우는 중' : '사진 10장 테스트'} <span>✦</span></button><button className="clear-test-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={clearTestMemories} disabled={seedingTestMemories}>테스트 별 지우기</button></div>}
+      {isLocalDevelopment && <div className="dev-memory-tools" aria-label="개발용 기억 테스트 도구"><button className="seed-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={seedTestMemories} disabled={seedingTestMemories}>{seedingTestMemories ? '테스트 별 채우는 중' : '사진 20장 테스트'} <span>✦</span></button><button className="clear-test-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={clearTestMemories} disabled={seedingTestMemories}>테스트 별 지우기</button></div>}
       <div className={`creator-backdrop${createOpen ? ' open' : ''}`} role="presentation">
         <button className="creator-dismiss-layer" type="button" aria-label="만들기 창 바깥을 눌러 닫기" onClick={() => closeCreator()} />
         <form className={`memory-creator${creatingMemory ? ' creating' : ''}${isFirstMemoryCreation ? ' first-memory-creator' : ''}`} onSubmit={createStars} aria-label="기억별 만들기">

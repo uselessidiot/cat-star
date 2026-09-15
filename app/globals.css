@@ -708,7 +708,6 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   48% { opacity:.36; transform:scale(1.28); }
   100% { opacity:.22; transform:scale(.82); }
 }
-
 @keyframes first-memory-float {
   from { opacity:0; transform:translate(-50%,-44%); }
   to { opacity:1; transform:translate(-50%,-50%); }
@@ -2349,7 +2348,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 
 /* Clean home illustration: no baked-in cat/text; overlay the small copy and walking Lulu. */
 .sky-scene {
-  background-image:url('/assets/center-world/lulu-main-sky-clean.png');
+  background-image:url('/assets/center-world/lulu-main-sky-clean-no-hero.png');
   background-size:cover;
   background-position:center center;
 }
@@ -3294,4 +3293,416 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 .sky-scene .memory-star[data-distance='passed']::after,
 .sky-scene .memory-star[data-distance='passed'] .proximity-ring {
   opacity:0 !important;
+}
+
+/* Quieter constellation pass: smaller star bodies, wider but thinner glow, less planet-like roundness. */
+.sky-scene .memory-star {
+  --memory-orb-glow:rgba(255,202,154,.18);
+  width:38px;
+  height:38px;
+}
+
+.sky-scene .memory-star::before {
+  inset:12px !important;
+  opacity:.22 !important;
+  filter:blur(7px) !important;
+  background:radial-gradient(circle,color-mix(in srgb,var(--memory-orb,#fff2c7) 42%,transparent) 0 16%,color-mix(in srgb,var(--memory-orb,#fff2c7) 13%,transparent) 40%,transparent 75%) !important;
+}
+
+.sky-scene .memory-star .star-core,
+.sky-scene .memory-star.shape-four .star-core,
+.sky-scene .memory-star.shape-six .star-core,
+.sky-scene .memory-star.shape-orb .star-core,
+.sky-scene .memory-star.shape-comet .star-core,
+.sky-scene .memory-star.shape-flower .star-core,
+.sky-scene .memory-star.shape-crystal .star-core {
+  width:calc(var(--star-size) * .94) !important;
+  height:calc(var(--star-size) * .94) !important;
+  background:transparent !important;
+  box-shadow:
+    0 0 3px color-mix(in srgb,var(--memory-orb,#fff2c7) 70%,transparent),
+    0 0 11px color-mix(in srgb,var(--memory-orb,#fff2c7) 28%,transparent),
+    0 0 26px var(--memory-orb-glow) !important;
+}
+
+.sky-scene .memory-star .star-core::before {
+  transform-origin:center;
+  transform:scale(.78);
+  filter:drop-shadow(0 0 3px color-mix(in srgb,var(--memory-orb,#fff2c7) 46%,transparent));
+}
+
+.sky-scene .memory-star .star-core::after {
+  opacity:.52;
+  transform:scale(.72);
+}
+
+.sky-scene .memory-star.empty::before {
+  opacity:.13 !important;
+}
+
+.sky-scene .memory-star.empty .star-core {
+  opacity:.46 !important;
+  filter:saturate(.58) brightness(.96);
+  box-shadow:
+    0 0 2px rgba(255,248,226,.48),
+    0 0 9px rgba(213,207,239,.13) !important;
+}
+
+.sky-scene .memory-star.filled {
+  --memory-orb-glow:rgba(255,188,135,.19);
+}
+
+.sky-scene .memory-star.filled::before {
+  inset:10px !important;
+  opacity:.28 !important;
+  filter:blur(8px) !important;
+}
+
+.sky-scene .memory-star.filled .star-core {
+  opacity:.78 !important;
+}
+
+.sky-scene .memory-star.filled.created:not(.selected)::before {
+  opacity:.2 !important;
+}
+
+.sky-scene .memory-star.filled.created:not(.selected) .star-core {
+  width:calc(var(--star-size) * .78) !important;
+  height:calc(var(--star-size) * .78) !important;
+  opacity:.66 !important;
+}
+
+.sky-scene .memory-star.shape-orb .star-core,
+.sky-scene .memory-star.filled.created.shape-orb:not(.selected) .star-core {
+  width:calc(var(--star-size) * 1.08) !important;
+  height:calc(var(--star-size) * 1.08) !important;
+}
+
+.sky-scene .memory-star.shape-orb .star-core::before {
+  inset:12%;
+  background:
+    radial-gradient(circle at 36% 30%,rgba(255,255,242,.9) 0 7%,transparent 8%),
+    radial-gradient(circle,color-mix(in srgb,var(--memory-orb,#fff2c7) 82%,rgba(255,255,238,.22)) 0 34%,transparent 68%) !important;
+  transform:scale(.7);
+}
+
+.sky-scene .memory-star[data-distance='close'] .star-core {
+  max-width:17px !important;
+  max-height:17px !important;
+}
+
+.sky-scene .memory-star.filled.created:not(.selected) .star-core {
+  max-width:15px !important;
+  max-height:15px !important;
+}
+
+.sky-scene .memory-star:hover .star-core,
+.sky-scene .memory-star:focus-visible .star-core {
+  --shape-scale:1.06;
+  filter:brightness(1.04) saturate(1.02);
+}
+
+.sky-scene .memory-star.selected .star-core {
+  --shape-scale:1.12;
+  max-width:19px !important;
+  max-height:19px !important;
+  opacity:.92 !important;
+  filter:saturate(1.04) brightness(1.06);
+  box-shadow:
+    0 0 4px color-mix(in srgb,var(--memory-orb,#fff2c7) 76%,transparent),
+    0 0 15px color-mix(in srgb,var(--memory-orb,#fff2c7) 38%,transparent),
+    0 0 42px rgba(255,209,157,.2) !important;
+}
+
+.sky-scene .memory-star.selected::after {
+  inset:-34px !important;
+  opacity:.58 !important;
+  filter:blur(15px) !important;
+  background:radial-gradient(circle,rgba(255,229,185,.2),rgba(245,196,185,.08) 42%,transparent 73%) !important;
+  animation:memory-recall-halo 4.8s ease-in-out infinite !important;
+}
+
+.sky-scene .memory-star .proximity-ring {
+  inset:10px !important;
+  opacity:.1 !important;
+  transform:scale(.78) !important;
+}
+
+.sky-scene .memory-star[data-distance='close'] .proximity-ring {
+  opacity:.2 !important;
+  transform:scale(.9) !important;
+}
+
+.sky-scene .memory-star[data-distance='close']:hover .proximity-ring,
+.sky-scene .memory-star[data-distance='close']:focus-visible .proximity-ring,
+.sky-scene .memory-star.selected .proximity-ring {
+  opacity:.3 !important;
+  transform:scale(.98) !important;
+}
+
+/* Memory recall detail: reduce popup feel; let it surface like a warm fragment from the selected star. */
+.sky-scene .memory-detail {
+  border-color:rgba(255,250,236,.13);
+  border-radius:6px 24px 8px 21px;
+  background:
+    radial-gradient(circle at 8% 52%,rgba(255,225,181,.18),transparent 30%),
+    radial-gradient(circle at 58% 10%,rgba(255,255,239,.16),transparent 36%),
+    linear-gradient(145deg,rgba(255,242,224,.34),rgba(239,205,218,.2));
+  box-shadow:
+    0 18px 46px rgba(59,55,87,.1),
+    0 0 54px rgba(255,214,174,.07),
+    inset 0 1px rgba(255,255,255,.24);
+  backdrop-filter:blur(14px) saturate(.96);
+  opacity:0;
+  filter:blur(7px);
+  transform:translate3d(0,-50%,0) scale(.9);
+  transition:
+    opacity 1.05s var(--ease-soft),
+    transform 1.18s var(--ease-soft),
+    filter 1.05s var(--ease-soft);
+}
+
+.sky-scene .memory-detail.visible {
+  opacity:.94;
+  filter:blur(0);
+}
+
+.sky-scene .memory-detail.visible.visit-right {
+  transform:translate3d(0,-50%,0) scale(1);
+}
+
+.sky-scene .memory-detail.visit-left {
+  transform:translate3d(-100%,-50%,0) scale(.9);
+}
+
+.sky-scene .memory-detail.visible.visit-left {
+  transform:translate3d(-100%,-50%,0) scale(1);
+}
+
+.sky-scene .memory-detail::after {
+  width:116px;
+  height:116px;
+  opacity:.45;
+  filter:blur(20px);
+  background:radial-gradient(circle,rgba(255,225,178,.2),rgba(244,189,188,.08) 48%,transparent 74%);
+  animation:memory-recall-mist 5.8s ease-in-out infinite;
+}
+
+.sky-scene .memory-detail .memory-photo {
+  border-color:rgba(255,248,231,.18);
+  box-shadow:0 8px 22px rgba(64,58,88,.08),inset 0 0 28px rgba(255,227,199,.09);
+}
+
+.sky-scene .memory-detail .memory-close {
+  background:rgba(255,246,232,.08) !important;
+}
+
+@keyframes memory-recall-halo {
+  0%,100% { opacity:.44; transform:scale(.94); }
+  48% { opacity:.66; transform:scale(1.08); }
+}
+
+@keyframes memory-recall-mist {
+  0%,100% { opacity:.34; transform:translateY(-50%) scale(.92); }
+  50% { opacity:.54; transform:translateY(-50%) scale(1.08); }
+}
+
+@media (max-width:760px) {
+  .sky-scene .memory-star {
+    width:34px;
+    height:34px;
+  }
+
+  .sky-scene .memory-star .star-core,
+  .sky-scene .memory-star.shape-four .star-core,
+  .sky-scene .memory-star.shape-six .star-core,
+  .sky-scene .memory-star.shape-orb .star-core,
+  .sky-scene .memory-star.shape-comet .star-core,
+  .sky-scene .memory-star.shape-flower .star-core,
+  .sky-scene .memory-star.shape-crystal .star-core {
+    width:calc(var(--star-size) * .82) !important;
+    height:calc(var(--star-size) * .82) !important;
+  }
+
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    transform:translate3d(0,24px,0) scale(.96);
+  }
+
+  .sky-scene .memory-detail.visible.visit-left,
+  .sky-scene .memory-detail.visible.visit-right {
+    transform:translate3d(0,0,0) scale(1);
+  }
+}
+
+/* Visibility nudge: keep the smaller silhouette, but bring back a clear star-like focus. */
+.sky-scene .memory-star::before {
+  opacity:.28 !important;
+  filter:blur(6.5px) !important;
+}
+
+.sky-scene .memory-star .star-core::before {
+  transform:scale(.9);
+  filter:
+    drop-shadow(0 0 3px color-mix(in srgb,var(--memory-orb,#fff2c7) 58%,transparent))
+    drop-shadow(0 0 9px color-mix(in srgb,var(--memory-orb,#fff2c7) 22%,transparent));
+}
+
+.sky-scene .memory-star .star-core::after {
+  opacity:.68;
+}
+
+.sky-scene .memory-star.empty .star-core {
+  opacity:.56 !important;
+}
+
+.sky-scene .memory-star.filled .star-core {
+  opacity:.86 !important;
+  box-shadow:
+    0 0 3px color-mix(in srgb,var(--memory-orb,#fff2c7) 88%,transparent),
+    0 0 13px color-mix(in srgb,var(--memory-orb,#fff2c7) 38%,transparent),
+    0 0 31px rgba(255,197,143,.22) !important;
+}
+
+.sky-scene .memory-star.filled.created:not(.selected) .star-core {
+  opacity:.76 !important;
+}
+
+.sky-scene .memory-star[data-distance='close'] .star-core {
+  max-width:18px !important;
+  max-height:18px !important;
+}
+
+.sky-scene .memory-star[data-distance='close'] .proximity-ring {
+  opacity:.25 !important;
+}
+
+.sky-scene .memory-star.selected .star-core {
+  opacity:.96 !important;
+}
+
+@media (max-width:760px) {
+  .sky-scene .memory-star.empty .star-core {
+    opacity:.52 !important;
+  }
+
+  .sky-scene .memory-star.filled .star-core {
+    opacity:.82 !important;
+  }
+}
+
+/* Hero-star composition and clearer clock moods. */
+.sky-scene .main-star {
+  left:50% !important;
+  top:15.8% !important;
+  width:clamp(104px,8.4vw,144px);
+  height:clamp(104px,8.4vw,144px);
+}
+
+.sky-scene .main-star .main-star-aura {
+  inset:-22px;
+}
+
+.sky-scene.sky-morning {
+  --sky-darken:.16;
+  --horizon-calm:.18;
+  --constellation-clarity:.18;
+}
+
+.sky-scene.sky-afternoon {
+  --sky-darken:.24;
+  --horizon-calm:.25;
+  --constellation-clarity:.3;
+}
+
+.sky-scene.sky-evening {
+  --sky-darken:.46;
+  --horizon-calm:.42;
+  --constellation-clarity:.56;
+}
+
+.sky-scene.sky-night {
+  --sky-darken:.68;
+  --horizon-calm:.62;
+  --constellation-clarity:.78;
+}
+
+.sky-scene.sky-morning::before {
+  opacity:.68;
+}
+
+.sky-scene.sky-morning .star-world::after {
+  opacity:.54;
+}
+
+.sky-scene.sky-morning .memory-star {
+  filter:saturate(.68) brightness(.92);
+}
+
+.sky-scene.sky-afternoon .star-world::after {
+  opacity:.7;
+}
+
+.sky-scene.sky-evening .star-world::after {
+  opacity:.88;
+}
+
+.sky-scene.sky-night .star-world::after {
+  opacity:.98;
+}
+
+@media (max-width:760px) {
+  .sky-scene .main-star {
+    top:17.2% !important;
+    width:clamp(82px,24vw,112px);
+    height:clamp(82px,24vw,112px);
+  }
+}
+
+.sky-scene .main-star {
+  left:50% !important;
+  top:16% !important;
+  z-index:6;
+  width:clamp(92px,7.4vw,124px) !important;
+  height:clamp(92px,7.4vw,124px) !important;
+  background:
+    radial-gradient(circle at 48% 43%, rgba(255,255,246,.96) 0 5%, rgba(255,239,194,.95) 12%, rgba(255,202,133,.72) 27%, rgba(243,159,116,.25) 48%, rgba(226,175,211,.08) 65%, transparent 76%),
+    radial-gradient(ellipse at 50% 53%, rgba(255,220,157,.28), transparent 62%) !important;
+  filter:
+    drop-shadow(0 0 11px rgba(255,226,179,.56))
+    drop-shadow(0 0 28px rgba(255,187,122,.38))
+    drop-shadow(0 0 54px rgba(220,171,211,.18)) !important;
+  opacity:calc(1 - var(--travel) * .18) !important;
+}
+
+.sky-scene .main-star::before,
+.sky-scene .main-star::after,
+.sky-scene .main-star .main-star-aura,
+.sky-scene .main-star .main-star-ring,
+.sky-scene .main-star .main-star-core,
+.sky-scene .main-star .main-star-glint,
+.sky-scene .main-star .main-star-label {
+  display:block !important;
+}
+
+.sky-scene .main-star .main-star-core {
+  display:grid !important;
+}
+
+.sky-scene .main-star:hover,
+.sky-scene .main-star:focus-visible,
+.sky-scene .main-star.selected {
+  filter:
+    drop-shadow(0 0 15px rgba(255,235,193,.68))
+    drop-shadow(0 0 36px rgba(255,190,119,.48))
+    drop-shadow(0 0 68px rgba(221,178,215,.24)) !important;
+}
+
+@media (max-width:760px) {
+  .sky-scene .main-star {
+    top:17.5% !important;
+    width:clamp(76px,22vw,102px) !important;
+    height:clamp(76px,22vw,102px) !important;
+  }
 }
