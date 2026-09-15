@@ -337,12 +337,11 @@ export function SkyScene() {
     {
       kicker: '첫 별을 만드는 순간',
       title: <>첫 기억별이 켜지면,<br />이 밤하늘은 당신의 이야기가 돼요.</>,
-      body: '첫 별을 만든 뒤에는 그 별 곁으로 걸어갈 수 있어요. 나중에 보고 싶은 날에는 다시 찾아와 별 사이를 천천히 걸으면 됩니다.',
+      body: '이 안내가 끝나면 바로 첫 기억별을 만들 수 있어요. 사진 한 장을 고르고 짧게 적으면, 그 별 곁으로 천천히 걸어갈 수 있습니다.',
     },
   ];
   const openingStory = openingStorySteps[Math.min(openingStoryStep, openingStorySteps.length - 1)];
   const isOpeningLastStep = openingStoryStep >= openingStorySteps.length - 1;
-  const showFirstMemoryInvitation = !hasPersonalMemories && !openingStoryOpen && !createOpen && !detailVisible && !centerOpen;
   const isFirstMemoryCreation = !hasPersonalMemories && !fillTargetId;
 
   useEffect(() => {
@@ -1204,11 +1203,6 @@ export function SkyScene() {
         </>)}
       </aside>
       <aside className={`creation-notice${creationNotice ? ' visible' : ''}`} aria-live="polite">{creationNotice && <><span>{creationNotice.label ?? '기억이 별빛이 되었어요'}</span><strong>{creationNotice.name}</strong><small>{creationNotice.message}</small><button type="button" onClick={() => focusStar(creationNotice.id, allStars.find((star) => star.id === creationNotice.id)?.depth)}>{creationNotice.actionLabel ?? '그 별 곁으로 가기'} <b>✦</b></button></>}</aside>
-      {showFirstMemoryInvitation && <aside className="first-memory-invitation" aria-live="polite">
-        <span>첫 기억을 기다리는 밤</span>
-        <p>사진 한 장을 고르면 이 하늘에 당신의 첫 기억별이 켜져요.</p>
-        <button type="button" onPointerDown={(event) => event.stopPropagation()} onClick={openCreatorForNewStar}>첫 기억별 만들기 <b>✦</b></button>
-      </aside>}
       <p className="whisper">함께한 기억은,<br />조금 멀리서도 계속 빛나요.</p>
       {isLocalDevelopment && <div className="dev-memory-tools" aria-label="개발용 기억 테스트 도구"><button className="seed-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={seedTestMemories} disabled={seedingTestMemories}>{seedingTestMemories ? '테스트 별 채우는 중' : '사진 20장 테스트'} <span>✦</span></button><button className="clear-test-memories" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={clearTestMemories} disabled={seedingTestMemories}>테스트 별 지우기</button></div>}
       <div className={`creator-backdrop${createOpen ? ' open' : ''}`} role="presentation">
