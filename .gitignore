@@ -28,6 +28,7 @@ yarn-error.log*
 
 # local environment
 .env*
+!.env.example
 
 # deployment and generated files
 .vercel
@@ -37,3 +38,10 @@ next-env.d.ts
 /.wrangler-config/
 /outputs/
 /work/
+
+# local package manager cache / incremental build info
+/.pnpm-store/
+*.tsbuildinfo
+
+# claude code local settings (per-machine)
+.claude/settings.local.json
