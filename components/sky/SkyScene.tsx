@@ -148,6 +148,7 @@ const RECENT_CREATED_PLACES = [
 const TEST_SEED_MARKER = '[cat-star-test-seed]';
 const OPENING_STORY_SEEN = 'cat-star-opening-story-seen';
 const isLocalDevelopment = process.env.NODE_ENV !== 'production';
+type CatMoment = 'star-birth' | 'center-touch' | 'turn-back';
 
 const testMemorySeeds: Array<{ name: string; date: string; note: string; activity: ActivityTag; palette: [string, string, string] }> = [
   { name: '테스트 01 · 창가 첫빛', date: '2020-03-01', note: '아침 창가에 오래 머문 사진 한 장을 넣었을 때의 별이에요.', activity: '창가 구경', palette: ['#756fa8', '#f3c8bb', '#fff2c9'] },
@@ -243,6 +244,7 @@ export function SkyScene() {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [walking, setWalking] = useState(false);
   const [catSettling, setCatSettling] = useState(false);
+  const [catMoment, setCatMoment] = useState<CatMoment | null>(null);
   const [skyTime, setSkyTime] = useState<SkyTime>('afternoon');
   const [storyStep, setStoryStep] = useState(0);
   const [storyPulse, setStoryPulse] = useState(0);
@@ -254,6 +256,8 @@ export function SkyScene() {
   const [profilePortraitBlob, setProfilePortraitBlob] = useState<Blob | undefined>(undefined);
   const walkingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settlingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catMomentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catMomentDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const detailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const travelAnimation = useRef<number | null>(null);
   const travelRef = useRef(0);
@@ -370,6 +374,8 @@ export function SkyScene() {
       document.removeEventListener('keydown', closeOnEscape);
       if (walkingTimer.current) clearTimeout(walkingTimer.current);
       if (settlingTimer.current) clearTimeout(settlingTimer.current);
+      if (catMomentTimer.current) clearTimeout(catMomentTimer.current);
+      if (catMomentDelayTimer.current) clearTimeout(catMomentDelayTimer.current);
       if (detailTimer.current) clearTimeout(detailTimer.current);
       if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
       if (travelAnimation.current != null) cancelAnimationFrame(travelAnimation.current);
@@ -462,8 +468,37 @@ export function SkyScene() {
     }
   }
 
+  function clearCatMoment() {
+    if (catMomentTimer.current) clearTimeout(catMomentTimer.current);
+    if (catMomentDelayTimer.current) clearTimeout(catMomentDelayTimer.current);
+    catMomentTimer.current = null;
+    catMomentDelayTimer.current = null;
+    setCatMoment(null);
+  }
+
+  function playCatMoment(moment: CatMoment, duration = 1800, delay = 0) {
+    if (catMomentTimer.current) clearTimeout(catMomentTimer.current);
+    if (catMomentDelayTimer.current) clearTimeout(catMomentDelayTimer.current);
+    const startMoment = () => {
+      setCatMoment(moment);
+      catMomentTimer.current = setTimeout(() => {
+        setCatMoment((current) => current === moment ? null : current);
+        catMomentTimer.current = null;
+      }, duration);
+    };
+    if (delay > 0) {
+      catMomentDelayTimer.current = setTimeout(() => {
+        catMomentDelayTimer.current = null;
+        startMoment();
+      }, delay);
+      return;
+    }
+    startMoment();
+  }
+
   function beginWalking(duration = 560) {
     const walkingDuration = Math.max(duration, 360);
+    clearCatMoment();
     setWalking(true);
     setCatSettling(false);
     if (walkingTimer.current) clearTimeout(walkingTimer.current);
@@ -471,7 +506,10 @@ export function SkyScene() {
     walkingTimer.current = setTimeout(() => {
       setWalking(false);
       setCatSettling(true);
-      settlingTimer.current = setTimeout(() => setCatSettling(false), 780);
+      settlingTimer.current = setTimeout(() => {
+        setCatSettling(false);
+        if (travelRef.current >= END_STORY_GATE) playCatMoment('turn-back', 2200, 260);
+      }, 900);
     }, walkingDuration);
   }
 
@@ -531,6 +569,7 @@ export function SkyScene() {
   function touchCenterStar() {
     setCenterTouched(true);
     setStoryPulse(0);
+    playCatMoment('center-touch', 2200);
     if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
     centerTouchTimer.current = setTimeout(() => setCenterTouched(false), 2400);
   }
@@ -806,7 +845,10 @@ export function SkyScene() {
     const source = { date: draft.date || dateFromFile(file), name: draft.name.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '), file, preview: singlePreview, activity: draft.activity };
     if (fillTargetId) {
       const baseStar = allStars.find((star) => star.id === fillTargetId) ?? memoryStars.find((star) => star.id === fillTargetId);
-      if (!baseStar) return;
+      if (!baseStar) {
+        setCreatingMemory(false);
+        return;
+      }
       const style = activityStyles[source.activity ?? activityFor(baseStar)];
       const filledStar: MemoryStarData = {
         ...baseStar,
@@ -836,12 +878,14 @@ export function SkyScene() {
         : { id: savedStar.id, name: savedStar.name, message: '기다리던 별에 기억이 스며들었어요.' });
       setTimeout(() => setBornIds([]), 2800);
       setTimeout(() => setCreationNotice(null), 6800);
-      await wait(980);
+      await wait(540);
       setCreatingMemory(false);
       closeCreator(true);
       setPendingFiles([]);
       setSinglePreview(null);
       setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
+      playCatMoment('star-birth', 1500);
+      await wait(760);
       focusStar(savedStar.id, savedStar.depth);
       return;
     }
@@ -883,12 +927,14 @@ export function SkyScene() {
       : { id: savedStar.id, name: savedStar.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
     setTimeout(() => setBornIds([]), 2800);
     setTimeout(() => setCreationNotice(null), 6800);
-    await wait(980);
+    await wait(540);
     setCreatingMemory(false);
     closeCreator(true);
     setPendingFiles([]);
     setSinglePreview(null);
     setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
+    playCatMoment('star-birth', 1500);
+    await wait(760);
     focusStar(savedStar.id, savedStar.depth);
   }
 
@@ -1100,7 +1146,7 @@ export function SkyScene() {
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
-        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}`} aria-hidden="true">
+        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} aria-hidden="true">
           <div className="cat-art"><Image className="cat-idle" src="/assets/cat-back-v2.png" alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized /></div>
         </div>
         <div className="horizon-haze" aria-hidden="true" />

@@ -4032,3 +4032,141 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
     font-size:8.5px !important;
   }
 }
+
+/* Natural cat motion pass: small emotional reactions, soft transitions. */
+.sky-scene .cat-art {
+  will-change:transform,filter;
+}
+
+.sky-scene .cat-idle {
+  transform-origin:50% 100%;
+  will-change:transform,opacity,filter;
+}
+
+.sky-scene .cat-art::after {
+  content:'';
+  position:absolute;
+  inset:-14% -24% -5%;
+  z-index:3;
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(4px) scale(.92);
+  mix-blend-mode:screen;
+  background:
+    radial-gradient(ellipse at 50% 16%,rgba(255,235,188,.26),rgba(255,202,146,.11) 36%,transparent 67%),
+    radial-gradient(ellipse at 50% 58%,rgba(222,192,230,.13),transparent 58%);
+  filter:blur(13px);
+  transition:opacity .9s var(--ease-soft),transform 1.25s var(--ease-soft);
+}
+
+.sky-scene .cat-wrap:not(.walking):not(.settling) .cat-idle {
+  animation:cat-idle-breath 8.2s ease-in-out infinite;
+}
+
+.sky-scene .cat-wrap.walking .cat-art::before {
+  animation:walk-frames 2.12s steps(3,end) infinite,cat-natural-walk 1.42s ease-in-out infinite !important;
+}
+
+.sky-scene .cat-wrap.walking::after {
+  animation:cat-soft-step-shadow 1.42s ease-in-out infinite !important;
+}
+
+.sky-scene .cat-wrap.settling .cat-art {
+  animation:cat-natural-settle 900ms cubic-bezier(.16,.86,.24,1) both !important;
+}
+
+.sky-scene .cat-wrap.settling .cat-idle {
+  transition-duration:.82s !important;
+}
+
+.sky-scene .cat-wrap.cat-star-birth .cat-art {
+  animation:cat-look-up-soft 1500ms cubic-bezier(.2,.78,.22,1) both !important;
+}
+
+.sky-scene .cat-wrap.cat-star-birth .cat-idle {
+  filter:brightness(calc(.76 - var(--dusk-progress,0) * .04)) saturate(.7) contrast(.96) drop-shadow(0 0 14px rgba(255,211,166,.22)) !important;
+}
+
+.sky-scene .cat-wrap.cat-star-birth .cat-art::after {
+  opacity:.72;
+  transform:translateY(-7px) scale(1.06);
+}
+
+.sky-scene .cat-wrap.cat-center-touch .cat-art {
+  animation:cat-comfort-touch 2200ms cubic-bezier(.2,.78,.22,1) both !important;
+}
+
+.sky-scene .cat-wrap.cat-center-touch .cat-idle {
+  filter:brightness(calc(.75 - var(--dusk-progress,0) * .04)) saturate(.66) contrast(.96) drop-shadow(0 0 11px rgba(255,218,174,.18)) !important;
+}
+
+.sky-scene .cat-wrap.cat-center-touch .cat-art::after {
+  opacity:.46;
+  transform:translateY(-2px) scale(.98);
+}
+
+.sky-scene .cat-wrap.cat-turn-back .cat-art {
+  animation:cat-turn-back-soft 2200ms cubic-bezier(.2,.78,.22,1) both !important;
+}
+
+.sky-scene .cat-wrap.cat-turn-back .cat-art::after {
+  opacity:.32;
+  transform:translateY(-3px) translateX(-4px) scale(.96);
+}
+
+@keyframes cat-idle-breath {
+  0%,100% { transform:translateY(0) scale(1); }
+  38% { transform:translateY(-1.2px) scale(1.006); }
+  68% { transform:translateY(.5px) scale(.998); }
+}
+
+@keyframes cat-natural-walk {
+  0%,100% { transform:translateX(calc(var(--cat-step-x,0px) * .12)) translateY(.2px) rotate(calc(var(--cat-lean,0deg) * .45)); }
+  34% { transform:translateX(var(--cat-step-x,0px)) translateY(-1.15px) rotate(var(--cat-counter-lean,0deg)); }
+  68% { transform:translateX(calc(var(--cat-step-x,0px) * -.45)) translateY(-.35px) rotate(calc(var(--cat-lean,0deg) * .7)); }
+}
+
+@keyframes cat-soft-step-shadow {
+  0%,100% { opacity:.2; transform:scaleX(.94); }
+  50% { opacity:.14; transform:scaleX(1.06); }
+}
+
+@keyframes cat-natural-settle {
+  0% { transform:translateY(-1px) scale(1.004) rotate(var(--cat-counter-lean,0deg)); }
+  42% { transform:translateY(3px) scale(.998) rotate(.12deg); }
+  72% { transform:translateY(1.2px) scale(1.001) rotate(-.05deg); }
+  100% { transform:translateY(2px) scale(1) rotate(0deg); }
+}
+
+@keyframes cat-look-up-soft {
+  0% { transform:translateY(2px) scale(1) rotate(0deg); }
+  26% { transform:translateY(.2px) scale(1.004) rotate(-.12deg); }
+  58% { transform:translateY(-3px) scale(1.012) rotate(.26deg); }
+  100% { transform:translateY(1px) scale(1.004) rotate(0deg); }
+}
+
+@keyframes cat-comfort-touch {
+  0%,100% { transform:translateY(2px) scale(1) rotate(0deg); }
+  24% { transform:translateY(1px) scale(.997) rotate(-.35deg); }
+  54% { transform:translateY(2.6px) scale(.994) rotate(.28deg); }
+  78% { transform:translateY(1.4px) scale(.999) rotate(-.08deg); }
+}
+
+@keyframes cat-turn-back-soft {
+  0%,100% { transform:translateY(2px) scaleX(1) rotate(0deg); }
+  30% { transform:translateY(1px) translateX(-1.5px) scaleX(.985) rotate(-.38deg); }
+  58% { transform:translateY(.5px) translateX(-3px) scaleX(.965) rotate(-.72deg); }
+  82% { transform:translateY(1.2px) translateX(-1px) scaleX(.99) rotate(-.22deg); }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .sky-scene .cat-wrap:not(.walking):not(.settling) .cat-idle,
+  .sky-scene .cat-wrap.walking .cat-art::before,
+  .sky-scene .cat-wrap.walking::after,
+  .sky-scene .cat-wrap.settling .cat-art,
+  .sky-scene .cat-wrap.cat-star-birth .cat-art,
+  .sky-scene .cat-wrap.cat-center-touch .cat-art,
+  .sky-scene .cat-wrap.cat-turn-back .cat-art {
+    animation:none !important;
+  }
+}
