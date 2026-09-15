@@ -704,6 +704,15 @@ export function SkyScene() {
     visitStar(id, customDepth, 920);
   }
 
+  function handleMemoryStarClick(star: MemoryStarData, selectable: boolean) {
+    if (suppressNextTap.current) return;
+    if (selectedId === star.id && detailReady) {
+      closeSelectedStar();
+      return;
+    }
+    visitStar(star.id, star.depth, selectable ? 760 : 1080);
+  }
+
   function handleWheel(event: WheelEvent<HTMLElement>) {
     if (openingStoryOpen || imageOpeningOpen) return;
     if ((event.target as HTMLElement).closest('.memory-creator')) return;
@@ -1080,12 +1089,14 @@ export function SkyScene() {
             const related = selected && selected.id !== star.id && activityFor(selected) === activity;
             const mobilePosition = mobileStarPositions[star.id] ?? [star.x, star.y];
             const mobile = project(mobilePosition[0], mobilePosition[1], depthFor(star.id), travel);
+            const isMobileLabelStar = selectedId === star.id || closest?.star.id === star.id;
             return <button key={star.id} type="button" data-reachability={selectable ? 'selectable' : 'approach'}
               data-depth={starDepths[star.id] ?? 'far'} data-distance={distance < .03 ? 'passed' : selectable ? 'close' : 'far'} data-memory={hasPhoto ? 'filled' : 'empty'}
+              data-mobile-label={isMobileLabelStar ? 'true' : undefined}
               className={`memory-star shape-${visual.shape} tone-${visual.tone}${star.favorite ? ' favorite' : ''}${hasPhoto ? ' filled' : ' empty'}${star.created ? ' created' : ''}${bornIds.includes(star.id) ? ' newly-born' : ''}${selectedId === star.id ? ' selected' : ''}${related ? ' tag-related' : ''}${selectedId && selectedId !== star.id && !related ? ' dimmed' : ''}`}
               style={{ left:`${x}%`, top:`${y}%`, opacity, '--depth-scale': scale, '--mobile-x':`${mobile.x}%`, '--mobile-y':`${mobile.y}%`, '--star-size':`${star.size}px`, '--twinkle-delay':`${(-((star.id * 1.37) % 8)).toFixed(2)}s`, '--twinkle-duration':`${(5.4 + (star.id % 5) * 1.1).toFixed(1)}s`, '--arrival-delay':`${120 + star.id * 42}ms` } as CSSProperties}
               aria-label={`${star.name}, ${star.date}${selectable ? ', 가까운 기억' : ', 멀리 있는 기억, 가까이 이동'}`} aria-pressed={selectedId === star.id}
-              onClick={() => { if (suppressNextTap.current) return; selectedId === star.id && detailReady ? closeSelectedStar() : visitStar(star.id, star.depth, selectable ? 760 : 1080); }}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '지금 열어볼 수 있어요' : '기억을 기다려요' : '조금 더 가까이'}</small></span></button>;
+              onClick={() => handleMemoryStarClick(star, selectable)}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '지금 열어볼 수 있어요' : '기억을 기다려요' : '조금 더 가까이'}</small></span></button>;
           })}
         </div>
 
