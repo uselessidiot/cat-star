@@ -7,8 +7,9 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { activityFor, activityStyles, activityTags, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredMemories, MEMORY_STORE_CHANGED, updateStoredMemory } from '@/lib/memory-store';
+import { apiStarToStoredMemory, deleteApiMemoryStar, getApiMemories, updateApiMemoryStar, uploadApiMemoryPhotos, validateMemoryPhotos, type ApiMemoryPhoto } from '@/lib/memory-api';
 
-type AlbumMemory = { id: string; starId: number; name: string; date: string; note: string; activity: ActivityTag; images: string[]; photos?: Blob[]; uploaded?: boolean; testSeed?: boolean; source: 'personal' | 'test'; star?: MemoryStarData };
+type AlbumMemory = { id: string; starId: number; remoteId?: string; name: string; date: string; note: string; activity: ActivityTag; images: string[]; photos?: (Blob | ApiMemoryPhoto)[]; uploaded?: boolean; testSeed?: boolean; source: 'personal' | 'test'; star?: MemoryStarData };
 
 export function MemoryAlbum() {
   const [memories, setMemories] = useState<AlbumMemory[]>([]);
@@ -20,18 +21,25 @@ export function MemoryAlbum() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [edit, setEdit] = useState<{ name: string; date: string; note: string; activity: ActivityTag }>({ name: '', date: '', note: '', activity: '함께한 일상' });
   const [editImage, setEditImage] = useState<string | null>(null);
-  const [editPhoto, setEditPhoto] = useState<Blob | null>(null);
+  const [editPhoto, setEditPhoto] = useState<File | null>(null);
 
   useEffect(() => {
     let active = true;
     const urls: string[] = [];
     function loadMemoriesFromStore() {
-      getStoredMemories().then((stored) => {
+      getApiMemories().catch(() => getStoredMemories().then((stored) => stored.map((memory) => {
+        const photos = memory.photos.map((photo, index) => {
+          const url = URL.createObjectURL(photo);
+          urls.push(url);
+          return { id: `${memory.id}-${index}`, url, uploadedAt: memory.createdAt, order: index };
+        });
+        return { ...memory, remoteId: String(memory.id), photos };
+      }))).then((stored) => {
         if (!active) return;
         const uploaded = stored.map((memory): AlbumMemory => {
-          const images = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
+          const images = memory.photos.map((photo) => photo.url);
           const testSeed = Boolean(memory.testSeed || memory.note.startsWith('[cat-star-test-seed]'));
-          return { id: `stored-${memory.id}`, starId: memory.id, name: memory.star.name, date: memory.star.date, note: memory.note.replace('[cat-star-test-seed] ', ''), activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, testSeed, source: testSeed ? 'test' : 'personal', star: memory.star };
+          return { id: `stored-${memory.id}`, starId: memory.id, remoteId: memory.remoteId, name: memory.star.name, date: memory.star.date, note: memory.note.replace('[cat-star-test-seed] ', ''), activity: activityFor(memory.star), images, photos: memory.photos, uploaded: true, testSeed, source: testSeed ? 'test' : 'personal', star: memory.star };
         });
         setMemories(uploaded);
       }).catch(() => undefined);
@@ -73,28 +81,45 @@ export function MemoryAlbum() {
     setEditing(false);
     setEdit({ name: memory.name, date: memory.date, note: memory.note, activity: memory.activity });
     setEditImage(memory.images[0] ?? null);
-    setEditPhoto(memory.photos?.[0] ?? null);
+    setEditPhoto(null);
   }
   async function saveEdit() {
     if (!selected) return;
     const style = activityStyles[edit.activity];
-    const nextPhoto = editPhoto ?? selected.photos?.[0];
     const nextImages = editImage ? [editImage] : selected.images.slice(0, 1);
-    const nextPhotos = nextPhoto ? [nextPhoto] : selected.photos?.slice(0, 1) ?? [];
-    const updatedStar = selected.star ? { ...selected.star, name: edit.name, date: edit.date, activity: edit.activity, shape: style.shape, tone: style.tone, photoCount: nextImages.length ? 1 : 0, created: true } : undefined;
-    const updated = { ...selected, ...edit, images: nextImages, photos: nextPhotos, star: updatedStar };
-    if (selected.uploaded && updatedStar) await updateStoredMemory(selected.starId, { star: updatedStar, note: edit.note, photos: nextPhotos });
+    const nextPhotos = selected.photos?.slice(0, 1) ?? [];
+    const updatedStar: MemoryStarData | undefined = selected.star ? { ...selected.star, name: edit.name, date: edit.date, activity: edit.activity, shape: style.shape, tone: style.tone, photoCount: nextImages.length ? 1 : 0, created: true } : undefined;
+    let updated: AlbumMemory = { ...selected, ...edit, images: nextImages, photos: nextPhotos, star: updatedStar };
+    if (selected.uploaded && updatedStar) {
+      try {
+        const saved = await updateApiMemoryStar(selected.remoteId ?? String(selected.starId), { name: edit.name, date: edit.date, activity: edit.activity, note: edit.note });
+        const withPhoto = editPhoto ? await uploadApiMemoryPhotos(saved.remoteId, [editPhoto]) : null;
+        const next = withPhoto ? apiStarToStoredMemory(withPhoto, saved.star) : saved;
+        updated = { ...updated, remoteId: next.remoteId, starId: next.id, star: next.star, images: next.photos.map((photo) => photo.url), photos: next.photos };
+      } catch {
+        const localPhotos = editPhoto ? [editPhoto] : selected.photos?.filter((photo): photo is Blob => photo instanceof Blob).slice(0, 1) ?? [];
+        await updateStoredMemory(selected.starId, { star: updatedStar, note: edit.note, photos: localPhotos });
+      }
+    }
     setMemories((items) => items.map((item) => item.id === selected.id ? updated : item)); setSelected(updated); setEditing(false);
   }
   function replaceEditPhoto(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    const validation = validateMemoryPhotos([file], selected?.photos?.length ?? 0);
+    if (validation) return;
     setEditPhoto(file);
     setEditImage(URL.createObjectURL(file));
   }
   async function removeMemory() {
     if (!selected) return;
-    if (selected.uploaded) await deleteStoredMemory(selected.starId);
+    if (selected.uploaded) {
+      try {
+        await deleteApiMemoryStar(selected.remoteId ?? String(selected.starId));
+      } catch {
+        await deleteStoredMemory(selected.starId);
+      }
+    }
     setMemories((items) => items.filter((item) => item.id !== selected.id)); setDeleteOpen(false); setSelected(null);
   }
 

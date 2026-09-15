@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { CatStarOpening, CAT_STAR_OPENING_SEEN } from '@/components/sky/CatStarOpening';
 import { activityFor, activityStyles, activityTags, constellationPairs, memoryStars, mobileStarPositions, starDepths, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
+import { createApiMemoryStar, fillApiMemoryStar, getApiCatProfile, getApiMemories, validateMemoryPhotos } from '@/lib/memory-api';
 
 const MAX_TRAVEL = 2.18;
 const END_STORY_GATE = MAX_TRAVEL - .045;
@@ -236,6 +237,7 @@ export function SkyScene() {
   const [bornIds, setBornIds] = useState<number[]>([]);
   const [creationNotice, setCreationNotice] = useState<{ id: number; name: string; label?: string; message: string; actionLabel?: string } | null>(null);
   const [personalMemoryCount, setPersonalMemoryCount] = useState(0);
+  const [catProfileId, setCatProfileId] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ name: string; date: string; note: string; activity: ActivityTag }>({ name: '', date: '', note: '', activity: '함께한 일상' });
   const [travel, setTravel] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -394,7 +396,11 @@ export function SkyScene() {
     let active = true;
     const urls: string[] = [];
     function loadMemoriesFromStore() {
-      getStoredMemories().then((stored) => {
+      getApiMemories().catch(() => getStoredMemories().then((stored) => stored.map((memory) => {
+        const photos = memory.photos.map((photo) => ({ id: `${memory.id}-${urls.length}`, url: URL.createObjectURL(photo), uploadedAt: memory.createdAt, order: urls.length }));
+        photos.forEach((photo) => urls.push(photo.url));
+        return { ...memory, remoteId: String(memory.id), photos };
+      }))).then((stored) => {
       if (!active) return;
       const storedBaseStars = stored.filter((memory) => memory.id <= 20);
       const storedAddedStars = stored.filter((memory) => memory.id > 20);
@@ -404,7 +410,7 @@ export function SkyScene() {
       setAddedStars(layoutCreatedStars(storedAddedStars.map((memory) => memory.star)));
       setAddedNotes(Object.fromEntries(stored.map((memory) => [memory.id, readableMemoryNote(memory.note)])));
       setPhotoUrls(Object.fromEntries(stored.map((memory) => {
-        const photos = memory.photos.map((photo) => { const url = URL.createObjectURL(photo); urls.push(url); return url; });
+        const photos = memory.photos.map((photo) => photo.url);
         return [memory.id, photos];
       })));
       const requestedId = Number(new URLSearchParams(window.location.search).get('memory'));
@@ -429,16 +435,19 @@ export function SkyScene() {
   useEffect(() => {
     let active = true;
     const urls: string[] = [];
-    getStoredCatProfile().then((profile) => {
+    getApiCatProfile().catch(() => getStoredCatProfile()).then((profile) => {
       if (!active || !profile) return;
+      if ('id' in profile && profile.id) setCatProfileId(profile.id);
       const next = { ...defaultCatProfile, ...profile };
       setCatProfile(next);
       setProfileDraft(next);
-      setProfilePortraitBlob(profile.portrait);
-      if (profile.portrait) {
+      setProfilePortraitBlob('portrait' in profile ? profile.portrait : undefined);
+      if ('portrait' in profile && profile.portrait) {
         const url = URL.createObjectURL(profile.portrait);
         urls.push(url);
         setProfilePortraitUrl(url);
+      } else if ('portraitUrl' in profile && typeof profile.portraitUrl === 'string') {
+        setProfilePortraitUrl(profile.portraitUrl);
       }
     }).catch(() => undefined);
     return () => {
@@ -672,7 +681,15 @@ export function SkyScene() {
   }
 
   function handleFilesSelected(event: ChangeEvent<HTMLInputElement>) {
-    const accepted = Array.from(event.target.files ?? []).slice(0, 1);
+    const selectedFiles = Array.from(event.target.files ?? []).slice(0, 1);
+    const validation = validateMemoryPhotos(selectedFiles);
+    if (validation) {
+      setCreationNotice({ id: fillTargetId ?? memoryStars[0].id, name: '사진을 다시 확인해 주세요', message: validation });
+      setTimeout(() => setCreationNotice(null), 5200);
+      event.target.value = '';
+      return;
+    }
+    const accepted = selectedFiles;
     setPendingFiles(accepted);
     const file = accepted[0];
     setSinglePreview(file ? URL.createObjectURL(file) : null);
@@ -770,6 +787,12 @@ export function SkyScene() {
     if (creatingMemory) return;
     const file = pendingFiles[0];
     if (!file) return;
+    const validation = validateMemoryPhotos([file]);
+    if (validation) {
+      setCreationNotice({ id: fillTargetId ?? memoryStars[0].id, name: '사진을 다시 확인해 주세요', message: validation });
+      setTimeout(() => setCreationNotice(null), 5200);
+      return;
+    }
     setCreatingMemory(true);
     const isFirstPersonalMemory = personalMemoryCount === 0;
     const source = { date: draft.date || dateFromFile(file), name: draft.name.trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' '), file, preview: singlePreview, activity: draft.activity };
@@ -788,15 +811,21 @@ export function SkyScene() {
         created: true,
       };
       const note = draft.note.trim() || '이 순간이 조용히 별빛으로 머물러요.';
-      await saveStoredMemories([{ id: filledStar.id, star: filledStar, note, photos: [source.file], createdAt: new Date().toISOString() }]);
-      setFilledStars((stars) => ({ ...stars, [filledStar.id]: filledStar }));
-      setPhotoUrls((current) => ({ ...current, [filledStar.id]: source.preview ? [source.preview] : [] }));
-      setAddedNotes((current) => ({ ...current, [filledStar.id]: note }));
+      let saved = { id: filledStar.id, star: filledStar, note, photos: source.preview ? [{ url: source.preview }] : [] };
+      try {
+        saved = await fillApiMemoryStar({ starId: String(baseStar.remoteId ?? baseStar.id), name: source.name, date: source.date, activity: source.activity, note }, [source.file], filledStar);
+      } catch {
+        await saveStoredMemories([{ id: filledStar.id, star: filledStar, note, photos: [source.file], createdAt: new Date().toISOString() }]);
+      }
+      const savedStar = saved.star;
+      setFilledStars((stars) => ({ ...stars, [savedStar.id]: savedStar }));
+      setPhotoUrls((current) => ({ ...current, [savedStar.id]: saved.photos.map((photo) => photo.url) }));
+      setAddedNotes((current) => ({ ...current, [savedStar.id]: note }));
       setPersonalMemoryCount((count) => count + 1);
-      setBornIds([filledStar.id]);
+      setBornIds([savedStar.id]);
       setCreationNotice(isFirstPersonalMemory
-        ? { id: filledStar.id, name: filledStar.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
-        : { id: filledStar.id, name: filledStar.name, message: '기다리던 별에 기억이 스며들었어요.' });
+        ? { id: savedStar.id, name: savedStar.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
+        : { id: savedStar.id, name: savedStar.name, message: '기다리던 별에 기억이 스며들었어요.' });
       setTimeout(() => setBornIds([]), 2800);
       setTimeout(() => setCreationNotice(null), 6800);
       await wait(980);
@@ -805,11 +834,11 @@ export function SkyScene() {
       setPendingFiles([]);
       setSinglePreview(null);
       setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
-      focusStar(filledStar.id, filledStar.depth);
+      focusStar(savedStar.id, savedStar.depth);
       return;
     }
-    const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
     const style = activityStyles[source.activity ?? '함께한 일상'];
+    const nextId = Math.max(20, ...allStars.map((star) => star.id)) + 1;
     const created: MemoryStarData = {
       id: nextId,
       name: source.name,
@@ -824,17 +853,26 @@ export function SkyScene() {
       photoCount: 1,
       created: true,
     };
-    const createdWithPlace = layoutCreatedStars([...addedStars, created]).find((star) => star.id === created.id) ?? created;
     const note = draft.note.trim() || '이 순간이 밤하늘에 새 별로 머물러요.';
-    await saveStoredMemories([{ id: createdWithPlace.id, star: createdWithPlace, note, photos: [source.file], createdAt: new Date().toISOString() }]);
-    setAddedStars((stars) => layoutCreatedStars([...stars, createdWithPlace]));
-    setPhotoUrls((current) => ({ ...current, [createdWithPlace.id]: source.preview ? [source.preview] : [] }));
-    setAddedNotes((current) => ({ ...current, [createdWithPlace.id]: note }));
+    let saved = { id: created.id, star: created, note, photos: source.preview ? [{ url: source.preview }] : [] };
+    try {
+      const profile = catProfileId ?? (await getApiCatProfile()).id;
+      if (!catProfileId) setCatProfileId(profile);
+      saved = await createApiMemoryStar({ catProfileId: profile, name: source.name, date: source.date, activity: source.activity, note }, [source.file]);
+    } catch {
+      const createdWithPlace = layoutCreatedStars([...addedStars, created]).find((star) => star.id === created.id) ?? created;
+      await saveStoredMemories([{ id: createdWithPlace.id, star: createdWithPlace, note, photos: [source.file], createdAt: new Date().toISOString() }]);
+      saved = { id: createdWithPlace.id, star: createdWithPlace, note, photos: source.preview ? [{ url: source.preview }] : [] };
+    }
+    const savedStar = saved.star;
+    setAddedStars((stars) => [...stars.filter((star) => star.id !== savedStar.id), savedStar]);
+    setPhotoUrls((current) => ({ ...current, [savedStar.id]: saved.photos.map((photo) => photo.url) }));
+    setAddedNotes((current) => ({ ...current, [savedStar.id]: note }));
     setPersonalMemoryCount((count) => count + 1);
-    setBornIds([createdWithPlace.id]);
+    setBornIds([savedStar.id]);
     setCreationNotice(isFirstPersonalMemory
-      ? { id: createdWithPlace.id, name: createdWithPlace.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
-      : { id: createdWithPlace.id, name: createdWithPlace.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
+      ? { id: savedStar.id, name: savedStar.name, label: '첫 기억별이 켜졌어요', message: '이제 이 밤하늘은 루루와 당신의 이야기로 시작돼요.', actionLabel: '첫 별 곁으로 가기' }
+      : { id: savedStar.id, name: savedStar.name, message: '작은 빛이 자리를 찾아 새 기억별이 되었어요.' });
     setTimeout(() => setBornIds([]), 2800);
     setTimeout(() => setCreationNotice(null), 6800);
     await wait(980);
@@ -843,7 +881,7 @@ export function SkyScene() {
     setPendingFiles([]);
     setSinglePreview(null);
     setDraft({ name: '', date: '', note: '', activity: '함께한 일상' });
-    focusStar(createdWithPlace.id, createdWithPlace.depth);
+    focusStar(savedStar.id, savedStar.depth);
   }
 
   async function seedTestMemories() {

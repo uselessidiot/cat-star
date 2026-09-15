@@ -1,7 +1,7 @@
 export type ActivityTag = '낮잠' | '창가 구경' | '놀이' | '산책·외출' | '식사·간식' | '함께한 일상' | '특별한 날';
 export type StarShape = 'dot' | 'four' | 'six' | 'orb' | 'comet' | 'flower' | 'crystal';
 export type StarTone = 'cream' | 'blue' | 'peach' | 'lavender' | 'gold' | 'white' | 'rose';
-export type MemoryStarData = { id: number; name: string; date: string; x: number; y: number; size: number; shape: StarShape; tone: StarTone; activity?: ActivityTag; favorite?: boolean; depth?: number; photoCount?: number; created?: boolean };
+export type MemoryStarData = { id: number; remoteId?: string; name: string; date: string; x: number; y: number; size: number; shape: StarShape; tone: StarTone; activity?: ActivityTag; favorite?: boolean; depth?: number; photoCount?: number; created?: boolean };
 export const activityStyles: Record<ActivityTag, { shape: StarShape; tone: StarTone }> = {
   '낮잠': { shape: 'orb', tone: 'cream' }, '창가 구경': { shape: 'four', tone: 'blue' }, '놀이': { shape: 'six', tone: 'peach' },
   '산책·외출': { shape: 'comet', tone: 'lavender' }, '식사·간식': { shape: 'flower', tone: 'gold' }, '함께한 일상': { shape: 'dot', tone: 'white' }, '특별한 날': { shape: 'crystal', tone: 'rose' },
