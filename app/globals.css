@@ -71,7 +71,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 .star-core { animation:natural-twinkle var(--twinkle-duration) ease-in-out var(--twinkle-delay) infinite,star-arrive .9s var(--ease-soft) var(--arrival-delay) both; }
 .cat-wrap { --cat-base-x: 50%; left:calc(var(--cat-base-x) + var(--cat-shift)); transform:translateX(-50%) translateX(var(--cat-visit-shift,0vw)) scale(calc(1 + var(--travel) * .025)); transition:left .62s var(--ease-soft),transform 1.45s var(--ease-soft); transform-origin:50% 100%; }
 .cat-wrap.walking { transition:left .74s var(--ease-soft),transform 1.6s var(--ease-soft); }
-.cat-wrap.walking .cat-art { background-image:url('/assets/cat-walk-sprite-v2.png'); animation:walk-frames 1.9s steps(3,end) infinite,walk-bob 1.08s ease-in-out infinite; transform-origin:50% 100%; }
+.cat-wrap.walking .cat-art { background-image:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')); animation:walk-frames var(--cat-walk-duration,1.9s) steps(3,end) infinite,walk-bob 1.08s ease-in-out infinite; transform-origin:50% 100%; }
 .cat-wrap.walking .cat-idle { visibility:hidden; }
 .cat-wrap.walking::after { content:''; position:absolute; left:21%; right:12%; bottom:1%; height:7px; border-radius:50%; background:rgba(84,72,105,.12); filter:blur(5px); animation:step-shadow 2.25s ease-in-out infinite; }
 .journey-guide { position:absolute; z-index:7; left:50%; bottom:clamp(26px,5vh,48px); width:min(250px,42vw); transform:translateX(-50%); display:grid; gap:8px; justify-items:center; color:rgba(255,247,232,.55); font-size:11px; letter-spacing:.08em; pointer-events:none; transition:opacity .4s ease; }
@@ -1141,7 +1141,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   bottom:17.5%;
   width:clamp(180px,16vw,240px);
   aspect-ratio:520 / 756;
-  background:url('/assets/cat-walk-sprite-v2.png') 0 50% / 400% 100% no-repeat;
+  background:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) 0 50% / 400% 100% no-repeat;
   filter:brightness(.28) saturate(.65) drop-shadow(0 10px 18px rgba(35,36,66,.46));
   opacity:.96;
   transform:translateX(-50%) scaleX(-1);
@@ -2221,7 +2221,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .cat-wrap.walking .cat-art {
-  background-image:url('/assets/cat-walk-sprite-v2.png');
+  background-image:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png'));
 }
 
 @media (max-width:760px) {
@@ -2241,7 +2241,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .cat-art {
-  background-image:url('/assets/cat-walk-sprite-v2.png') !important;
+  background-image:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) !important;
   background-size:400% 100%;
   background-position:0 0;
   animation:walk-frames 1.9s steps(3,end) infinite,walk-bob 1.08s ease-in-out infinite;
@@ -2419,7 +2419,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .cat-wrap.walking .cat-art {
-  background-image:url('/assets/cat-walk-sprite-v2.png') !important;
+  background-image:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) !important;
   background-size:400% 100%;
   background-position:0 0;
   animation:walk-frames 1.9s steps(3,end) infinite,walk-bob 1.08s ease-in-out infinite !important;
@@ -2452,7 +2452,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   inset:0;
   z-index:1;
   opacity:0;
-  background:url('/assets/cat-walk-sprite-v2.png') 0 0 / 400% 100% no-repeat;
+  background:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) 0 0 / 400% 100% no-repeat;
   transition:opacity .62s var(--ease-soft),filter .62s var(--ease-soft);
   filter:brightness(.74) saturate(.68) contrast(.92) drop-shadow(0 5px 10px rgba(28,30,58,.16));
   pointer-events:none;
@@ -4064,7 +4064,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .cat-wrap.walking .cat-art::before {
-  animation:walk-frames 2.12s steps(3,end) infinite,cat-natural-walk 1.42s ease-in-out infinite !important;
+  animation:walk-frames var(--cat-walk-duration,2.12s) steps(3,end) infinite,cat-natural-walk 1.42s ease-in-out infinite !important;
 }
 
 .sky-scene .cat-wrap.walking::after {
