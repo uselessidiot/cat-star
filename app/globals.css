@@ -4063,6 +4063,25 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   animation:cat-idle-breath 8.2s ease-in-out infinite;
 }
 
+.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-art {
+  animation:cat-idle-attend var(--cat-idle-sprite-duration,1.72s) cubic-bezier(.2,.78,.22,1) both !important;
+}
+
+.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-art::before {
+  opacity:.95;
+  background:var(--cat-idle-sprite,url('/assets/cat-idle-sprite-v1.png')) 0 0 / 600% 100% no-repeat;
+  animation:cat-idle-sprite var(--cat-idle-sprite-duration,1.72s) steps(5,end) 1 both !important;
+  filter:brightness(.78) saturate(.72) contrast(.94) drop-shadow(0 5px 10px rgba(26,28,55,.16));
+  transition:opacity .34s var(--ease-soft),filter .34s var(--ease-soft);
+}
+
+.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-idle {
+  opacity:0;
+  animation:none;
+  transform:translateY(0) scale(1);
+  transition-duration:.34s;
+}
+
 .sky-scene .cat-wrap.walking .cat-art::before {
   animation:walk-frames var(--cat-walk-duration,2.12s) steps(3,end) infinite,cat-natural-walk 1.42s ease-in-out infinite !important;
 }
@@ -4120,6 +4139,18 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   68% { transform:translateY(.5px) scale(.998); }
 }
 
+@keyframes cat-idle-sprite {
+  from { background-position:0 0; }
+  to { background-position:100% 0; }
+}
+
+@keyframes cat-idle-attend {
+  0%,100% { transform:translateY(0) scale(1) rotate(0deg); }
+  22% { transform:translateY(-.7px) scale(1.002) rotate(-.04deg); }
+  54% { transform:translateY(-1.35px) scale(1.005) rotate(.09deg); }
+  78% { transform:translateY(-.4px) scale(1.002) rotate(.02deg); }
+}
+
 @keyframes cat-natural-walk {
   0%,100% { transform:translateX(calc(var(--cat-step-x,0px) * .12)) translateY(.2px) rotate(calc(var(--cat-lean,0deg) * .45)); }
   34% { transform:translateX(var(--cat-step-x,0px)) translateY(-1.15px) rotate(var(--cat-counter-lean,0deg)); }
@@ -4162,6 +4193,8 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 @media (prefers-reduced-motion:reduce) {
   .sky-scene .cat-wrap:not(.walking):not(.settling) .cat-idle,
   .sky-scene .cat-wrap.walking .cat-art::before,
+  .sky-scene .cat-wrap.idle-gesture .cat-art,
+  .sky-scene .cat-wrap.idle-gesture .cat-art::before,
   .sky-scene .cat-wrap.walking::after,
   .sky-scene .cat-wrap.settling .cat-art,
   .sky-scene .cat-wrap.cat-star-birth .cat-art,

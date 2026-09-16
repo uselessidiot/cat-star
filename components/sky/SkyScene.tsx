@@ -245,6 +245,7 @@ export function SkyScene() {
   const [walking, setWalking] = useState(false);
   const [catSettling, setCatSettling] = useState(false);
   const [catMoment, setCatMoment] = useState<CatMoment | null>(null);
+  const [idleGesture, setIdleGesture] = useState(false);
   const [skyTime, setSkyTime] = useState<SkyTime>('afternoon');
   const [storyStep, setStoryStep] = useState(0);
   const [storyPulse, setStoryPulse] = useState(0);
@@ -258,6 +259,8 @@ export function SkyScene() {
   const settlingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catMomentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catMomentDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleGestureDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleGestureTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const detailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const travelAnimation = useRef<number | null>(null);
   const travelRef = useRef(0);
@@ -393,11 +396,45 @@ export function SkyScene() {
       if (settlingTimer.current) clearTimeout(settlingTimer.current);
       if (catMomentTimer.current) clearTimeout(catMomentTimer.current);
       if (catMomentDelayTimer.current) clearTimeout(catMomentDelayTimer.current);
+      if (idleGestureDelayTimer.current) clearTimeout(idleGestureDelayTimer.current);
+      if (idleGestureTimer.current) clearTimeout(idleGestureTimer.current);
       if (detailTimer.current) clearTimeout(detailTimer.current);
       if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
       if (travelAnimation.current != null) cancelAnimationFrame(travelAnimation.current);
     };
   }, []);
+
+  useEffect(() => {
+    const clearIdleGestureTimers = () => {
+      if (idleGestureDelayTimer.current) clearTimeout(idleGestureDelayTimer.current);
+      if (idleGestureTimer.current) clearTimeout(idleGestureTimer.current);
+      idleGestureDelayTimer.current = null;
+      idleGestureTimer.current = null;
+    };
+
+    clearIdleGestureTimers();
+    setIdleGesture(false);
+
+    if (walking || catSettling || catMoment || centerOpen || createOpen || openingStoryOpen || imageOpeningOpen || detailVisible) {
+      return clearIdleGestureTimers;
+    }
+
+    const scheduleNextGesture = () => {
+      const delay = 5200 + Math.random() * 6200;
+      idleGestureDelayTimer.current = window.setTimeout(() => {
+        idleGestureDelayTimer.current = null;
+        setIdleGesture(true);
+        idleGestureTimer.current = window.setTimeout(() => {
+          setIdleGesture(false);
+          idleGestureTimer.current = null;
+          scheduleNextGesture();
+        }, catMotionSprites.idleGesture.durationMs);
+      }, delay);
+    };
+
+    scheduleNextGesture();
+    return clearIdleGestureTimers;
+  }, [walking, catSettling, catMoment, centerOpen, createOpen, openingStoryOpen, imageOpeningOpen, detailVisible]);
 
   useEffect(() => {
     try {
@@ -516,6 +553,7 @@ export function SkyScene() {
   function beginWalking(duration = 560) {
     const walkingDuration = Math.max(duration, 360);
     clearCatMoment();
+    setIdleGesture(false);
     setWalking(true);
     setCatSettling(false);
     if (walkingTimer.current) clearTimeout(walkingTimer.current);
@@ -1163,7 +1201,7 @@ export function SkyScene() {
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
-        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} data-cat-motion={catMotion} aria-hidden="true">
+        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}${idleGesture ? ' idle-gesture' : ''}`} data-cat-motion={idleGesture ? 'idle-gesture' : catMotion} aria-hidden="true">
           <div className="cat-art"><Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized /></div>
         </div>
         <div className="horizon-haze" aria-hidden="true" />
