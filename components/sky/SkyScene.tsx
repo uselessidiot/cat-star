@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type PointerEvent, type SyntheticEvent, type TouchEvent, type WheelEvent } from 'react';
 import Image from 'next/image';
 import { CatStarOpening, CAT_STAR_OPENING_SEEN } from '@/components/sky/CatStarOpening';
+import { catMotionCssVars, catMotionSprites, resolveCatMotion, type CatMoment } from '@/lib/cat-motion';
 import { activityFor, activityStyles, activityTags, constellationPairs, memoryStars, mobileStarPositions, starDepths, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
 import { createApiMemoryStar, fillApiMemoryStar, getApiCatProfile, getApiMemories, validateMemoryPhotos } from '@/lib/memory-api';
@@ -148,7 +149,6 @@ const RECENT_CREATED_PLACES = [
 const TEST_SEED_MARKER = '[cat-star-test-seed]';
 const OPENING_STORY_SEEN = 'cat-star-opening-story-seen';
 const isLocalDevelopment = process.env.NODE_ENV !== 'production';
-type CatMoment = 'star-birth' | 'center-touch' | 'turn-back';
 
 const testMemorySeeds: Array<{ name: string; date: string; note: string; activity: ActivityTag; palette: [string, string, string] }> = [
   { name: '테스트 01 · 창가 첫빛', date: '2020-03-01', note: '아침 창가에 오래 머문 사진 한 장을 넣었을 때의 별이에요.', activity: '창가 구경', palette: ['#756fa8', '#f3c8bb', '#fff2c9'] },
@@ -281,6 +281,7 @@ export function SkyScene() {
   const skyFollowShift = Math.min(1.25, Math.max(-1.25, catVisitShift * .13));
   const catLean = selectedProjection ? Math.min(1.15, Math.max(-1.15, (selectedProjection.x - 50) / 28)) : 0;
   const catStep = selectedProjection ? Math.min(5, Math.max(-5, (selectedProjection.x - 50) / 14)) : 0;
+  const catMotion = resolveCatMotion(walking, catSettling, catMoment);
   const detailStyle = selectedProjection ? {
     '--detail-x': `${Math.min(82, Math.max(18, selectedProjection.x + (detailOnRight ? 8 : -8)))}%`,
     '--detail-y': `${Math.min(74, Math.max(24, selectedProjection.y + 2))}%`,
@@ -293,6 +294,22 @@ export function SkyScene() {
   const duskProgress = skyTime === 'night' ? 1 : skyTime === 'evening' ? .58 : skyTime === 'morning' ? .12 : .24;
   const journeyText = atStoryEnd ? '밤 끝에서 · 천천히 더 걸으면 작은 말이 떠올라요' : endApproach > .55 ? '말이 떠오르는 밤끝으로 가는 중' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
   const endWarmth = Math.min(1, endApproach * .42 + (atStoryEnd ? endScrolls / 9 * .58 : 0));
+  const sceneStyle = {
+    '--travel': travel,
+    '--dusk-progress': duskProgress,
+    '--end-warmth': endWarmth,
+    '--pan-x': `${pan.x}px`,
+    '--pan-y': `${pan.y}px`,
+    '--drag-pull': dragPull,
+    '--drag-spread': dragSpread,
+    '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`,
+    '--cat-visit-shift': `${catVisitShift}vw`,
+    '--sky-follow-shift': `${skyFollowShift}vw`,
+    '--cat-lean': `${catLean}deg`,
+    '--cat-counter-lean': `${-catLean * .6}deg`,
+    '--cat-step-x': `${catStep}px`,
+    ...catMotionCssVars(),
+  } as CSSProperties;
   const filledMemoryStars = allStars.filter((star) => (photoUrls[star.id]?.length ?? 0) > 0);
   const totalPhotoCount = filledMemoryStars.reduce((sum, star) => sum + (photoUrls[star.id]?.length ?? 0), 0);
   const datedMemories = filledMemoryStars.map((star) => ({ star, inputDate: dateInputFromDisplay(star.date) })).filter((item) => item.inputDate);
@@ -1094,7 +1111,7 @@ export function SkyScene() {
   }
 
   return (
-    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={{ '--travel': travel, '--dusk-progress': duskProgress, '--end-warmth': endWarmth, '--pan-x':`${pan.x}px`, '--pan-y':`${pan.y}px`, '--drag-pull': dragPull, '--drag-spread': dragSpread, '--cat-shift': `${Math.sin(travel * 3.4) * 2.35}vw`, '--cat-visit-shift': `${catVisitShift}vw`, '--sky-follow-shift': `${skyFollowShift}vw`, '--cat-lean': `${catLean}deg`, '--cat-counter-lean': `${-catLean * .6}deg`, '--cat-step-x': `${catStep}px` } as CSSProperties}>
+    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={sceneStyle}>
       <CatStarOpening open={imageOpeningOpen} onComplete={completeImageOpening} />
       <div className="sky-background" aria-hidden="true"><div className="mist mist-one" /><div className="mist mist-two" /><div className="stardust" /></div>
       <header className="sky-header">
@@ -1146,8 +1163,8 @@ export function SkyScene() {
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
-        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} aria-hidden="true">
-          <div className="cat-art"><Image className="cat-idle" src="/assets/cat-back-v2.png" alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized /></div>
+        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} data-cat-motion={catMotion} aria-hidden="true">
+          <div className="cat-art"><Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized /></div>
         </div>
         <div className="horizon-haze" aria-hidden="true" />
       </section>
