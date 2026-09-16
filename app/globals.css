@@ -4200,46 +4200,48 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .star-label {
-  top:28px;
+  top:22px !important;
   display:grid;
-  min-width:128px;
-  max-width:168px;
-  padding:15px 0 0 44px;
-  border:0;
-  border-radius:0;
+  width:max-content !important;
+  min-width:128px !important;
+  max-width:168px !important;
+  padding:25px 0 0 56px !important;
+  border:0 !important;
+  border-radius:0 !important;
   color:rgba(255,246,221,.86);
-  background:transparent;
-  box-shadow:none;
-  backdrop-filter:none;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  outline:0 !important;
   text-align:left;
-  transform:translate(2px,13px);
+  transform:translate(10px,18px) !important;
   text-shadow:0 0 10px rgba(255,218,168,.16),0 1px 8px rgba(24,24,54,.44);
 }
 
 .sky-scene .star-label::before {
   content:'';
   position:absolute;
-  left:2px;
-  top:2px;
-  width:38px;
+  left:-18px;
+  top:0;
+  width:66px;
   height:1px;
-  background:linear-gradient(90deg,rgba(255,225,170,.72),rgba(255,225,170,.16));
-  box-shadow:0 0 8px rgba(255,215,154,.22);
-  transform:rotate(31deg);
+  background:linear-gradient(90deg,rgba(255,225,170,.78),rgba(255,225,170,.34) 58%,rgba(255,225,170,.08));
+  box-shadow:0 0 9px rgba(255,215,154,.24);
+  transform:rotate(35deg);
   transform-origin:left center;
 }
 
 .sky-scene .star-label::after {
   content:'';
   position:absolute;
-  left:31px;
-  top:15px;
-  width:7px;
-  height:7px;
+  left:36px;
+  top:30px;
+  width:8px;
+  height:8px;
   border:1px solid rgba(255,232,187,.6);
   border-radius:50%;
   background:rgba(255,238,203,.28);
-  box-shadow:0 0 10px rgba(255,221,165,.32),18px 10px 0 -3px rgba(255,238,203,.36);
+  box-shadow:0 0 11px rgba(255,221,165,.34),22px 11px 0 -3px rgba(255,238,203,.32);
 }
 
 .sky-scene .star-label strong,
@@ -4266,30 +4268,59 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 .sky-scene .memory-star[data-distance='close']:hover .star-label,
 .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
 .sky-scene .memory-star[data-distance='close'].selected .star-label {
-  transform:translate(8px,7px);
+  transform:translate(16px,11px) !important;
 }
 
-@media (max-width:640px) {
+@media (max-width:760px) {
+  .sky-scene .memory-star .star-label,
+  .sky-scene .memory-star[data-distance='close'] .star-label,
+  .sky-scene .memory-star[data-distance='close']:hover .star-label,
+  .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
+  .sky-scene .memory-star[data-distance='close'].selected .star-label,
+  .sky-scene .memory-star[data-distance='close']:not(.dimmed) .star-label,
+  .sky-scene .memory-star[data-mobile-label='true']:not(.dimmed) .star-label {
+    display:grid !important;
+    top:20px !important;
+    width:max-content !important;
+    min-width:102px !important;
+    max-width:126px !important;
+    padding:21px 0 0 43px !important;
+    border:0 !important;
+    border-radius:0 !important;
+    color:rgba(255,246,221,.84) !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    outline:0 !important;
+    transform:translate(8px,15px) !important;
+  }
+
+  .sky-scene .memory-star[data-mobile-label='true']:not(.dimmed) .star-label {
+    opacity:.76 !important;
+    visibility:visible !important;
+  }
+
   .sky-scene .star-label {
-    top:24px;
-    min-width:102px;
-    max-width:126px;
-    padding:12px 0 0 34px;
-    transform:translate(0,11px);
+    top:20px !important;
+    min-width:102px !important;
+    max-width:126px !important;
+    padding:21px 0 0 43px !important;
+    transform:translate(8px,15px) !important;
   }
 
   .sky-scene .star-label::before {
-    width:29px;
-    top:2px;
-    transform:rotate(32deg);
+    left:-14px;
+    top:0;
+    width:52px;
+    transform:rotate(35deg);
   }
 
   .sky-scene .star-label::after {
-    left:24px;
-    top:12px;
-    width:6px;
-    height:6px;
-    box-shadow:0 0 8px rgba(255,221,165,.28),14px 8px 0 -3px rgba(255,238,203,.32);
+    left:29px;
+    top:24px;
+    width:7px;
+    height:7px;
+    box-shadow:0 0 8px rgba(255,221,165,.28),17px 9px 0 -3px rgba(255,238,203,.32);
   }
 
   .sky-scene .star-label strong {
@@ -4298,6 +4329,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   }
 
   .sky-scene .star-label small {
+    display:block !important;
     max-width:104px;
     font-size:8px;
   }
@@ -4305,6 +4337,6 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .sky-scene .memory-star[data-distance='close']:hover .star-label,
   .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
   .sky-scene .memory-star[data-distance='close'].selected .star-label {
-    transform:translate(6px,6px);
+    transform:translate(13px,9px) !important;
   }
 }
