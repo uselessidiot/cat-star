@@ -282,6 +282,18 @@ export function SkyScene() {
   const catLean = selectedProjection ? Math.min(1.15, Math.max(-1.15, (selectedProjection.x - 50) / 28)) : 0;
   const catStep = selectedProjection ? Math.min(5, Math.max(-5, (selectedProjection.x - 50) / 14)) : 0;
   const catMotion = resolveCatMotion(walking, catSettling, catMoment);
+  const detailStyle = selectedProjection ? {
+    '--detail-x': `${Math.min(82, Math.max(18, selectedProjection.x + (detailOnRight ? 8 : -8)))}%`,
+    '--detail-y': `${Math.min(74, Math.max(24, selectedProjection.y + 2))}%`,
+  } as CSSProperties : undefined;
+  const closest = projected.filter((item) => item.selectable).sort((a, b) => a.distance - b.distance)[0];
+  const atStoryEnd = travel >= END_STORY_GATE;
+  const storyActive = storyPulse > 0 && atStoryEnd && !detailVisible && !centerOpen && !createOpen && !openingStoryOpen;
+  const currentStory = catStoryMessages[storyStep % catStoryMessages.length];
+  const endApproach = Math.min(1, Math.max(0, (travel - STORY_APPROACH_START) / (MAX_TRAVEL - STORY_APPROACH_START)));
+  const duskProgress = skyTime === 'night' ? 1 : skyTime === 'evening' ? .58 : skyTime === 'morning' ? .12 : .24;
+  const journeyText = atStoryEnd ? '밤 끝에서 · 천천히 더 걸으면 작은 말이 떠올라요' : endApproach > .55 ? '말이 떠오르는 밤끝으로 가는 중' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
+  const endWarmth = Math.min(1, endApproach * .42 + (atStoryEnd ? endScrolls / 9 * .58 : 0));
   const sceneStyle = {
     '--travel': travel,
     '--dusk-progress': duskProgress,
@@ -298,18 +310,6 @@ export function SkyScene() {
     '--cat-step-x': `${catStep}px`,
     ...catMotionCssVars(),
   } as CSSProperties;
-  const detailStyle = selectedProjection ? {
-    '--detail-x': `${Math.min(82, Math.max(18, selectedProjection.x + (detailOnRight ? 8 : -8)))}%`,
-    '--detail-y': `${Math.min(74, Math.max(24, selectedProjection.y + 2))}%`,
-  } as CSSProperties : undefined;
-  const closest = projected.filter((item) => item.selectable).sort((a, b) => a.distance - b.distance)[0];
-  const atStoryEnd = travel >= END_STORY_GATE;
-  const storyActive = storyPulse > 0 && atStoryEnd && !detailVisible && !centerOpen && !createOpen && !openingStoryOpen;
-  const currentStory = catStoryMessages[storyStep % catStoryMessages.length];
-  const endApproach = Math.min(1, Math.max(0, (travel - STORY_APPROACH_START) / (MAX_TRAVEL - STORY_APPROACH_START)));
-  const duskProgress = skyTime === 'night' ? 1 : skyTime === 'evening' ? .58 : skyTime === 'morning' ? .12 : .24;
-  const journeyText = atStoryEnd ? '밤 끝에서 · 천천히 더 걸으면 작은 말이 떠올라요' : endApproach > .55 ? '말이 떠오르는 밤끝으로 가는 중' : travel < .1 ? '스크롤·스와이프로 별 사이 걷기' : closest ? `${closest.star.name} 가까이` : '더 먼 기억으로 걷는 중';
-  const endWarmth = Math.min(1, endApproach * .42 + (atStoryEnd ? endScrolls / 9 * .58 : 0));
   const filledMemoryStars = allStars.filter((star) => (photoUrls[star.id]?.length ?? 0) > 0);
   const totalPhotoCount = filledMemoryStars.reduce((sum, star) => sum + (photoUrls[star.id]?.length ?? 0), 0);
   const datedMemories = filledMemoryStars.map((star) => ({ star, inputDate: dateInputFromDisplay(star.date) })).filter((item) => item.inputDate);
