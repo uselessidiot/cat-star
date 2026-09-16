@@ -10,11 +10,6 @@ export const catMotionSprites = {
   idle: {
     src: '/assets/cat-back-v2.png',
   },
-  idleGesture: {
-    src: '/assets/cat-idle-sprite-v1.png',
-    frames: 6,
-    durationMs: 1720,
-  },
   walk: {
     src: '/assets/cat-walk-sprite-v2.png',
     frames: 4,
@@ -31,8 +26,6 @@ export function resolveCatMotion(walking: boolean, settling: boolean, moment: Ca
 export function catMotionCssVars() {
   return {
     '--cat-idle-src': `url("${catMotionSprites.idle.src}")`,
-    '--cat-idle-sprite': `url("${catMotionSprites.idleGesture.src}")`,
-    '--cat-idle-sprite-duration': `${catMotionSprites.idleGesture.durationMs}ms`,
     '--cat-walk-sprite': `url("${catMotionSprites.walk.src}")`,
     '--cat-walk-duration': `${catMotionSprites.walk.durationMs}ms`,
   } as CSSProperties;

@@ -4059,27 +4059,12 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   transition:opacity .9s var(--ease-soft),transform 1.25s var(--ease-soft);
 }
 
-.sky-scene .cat-wrap:not(.walking):not(.settling) .cat-idle {
-  animation:cat-idle-breath 8.2s ease-in-out infinite;
+.sky-scene .cat-wrap:not(.walking):not(.settling):not(.cat-star-birth):not(.cat-center-touch):not(.cat-turn-back) .cat-idle {
+  animation:cat-idle-breath 8.4s ease-in-out infinite;
 }
 
-.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-art {
-  animation:cat-idle-attend var(--cat-idle-sprite-duration,1.72s) cubic-bezier(.2,.78,.22,1) both !important;
-}
-
-.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-art::before {
-  opacity:.95;
-  background:var(--cat-idle-sprite,url('/assets/cat-idle-sprite-v1.png')) 0 0 / 600% 100% no-repeat;
-  animation:cat-idle-sprite var(--cat-idle-sprite-duration,1.72s) steps(5,end) 1 both !important;
-  filter:brightness(.78) saturate(.72) contrast(.94) drop-shadow(0 5px 10px rgba(26,28,55,.16));
-  transition:opacity .34s var(--ease-soft),filter .34s var(--ease-soft);
-}
-
-.sky-scene .cat-wrap.idle-gesture:not(.walking):not(.settling) .cat-idle {
-  opacity:0;
-  animation:none;
-  transform:translateY(0) scale(1);
-  transition-duration:.34s;
+.sky-scene .cat-wrap:not(.walking):not(.settling):not(.cat-star-birth):not(.cat-center-touch):not(.cat-turn-back) .cat-art {
+  animation:cat-idle-sway 9.6s ease-in-out infinite !important;
 }
 
 .sky-scene .cat-wrap.walking .cat-art::before {
@@ -4135,20 +4120,15 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 
 @keyframes cat-idle-breath {
   0%,100% { transform:translateY(0) scale(1); }
-  38% { transform:translateY(-1.2px) scale(1.006); }
-  68% { transform:translateY(.5px) scale(.998); }
+  38% { transform:translateY(-.8px) scale(1.003); }
+  68% { transform:translateY(.35px) scale(.999); }
 }
 
-@keyframes cat-idle-sprite {
-  from { background-position:0 0; }
-  to { background-position:100% 0; }
-}
-
-@keyframes cat-idle-attend {
-  0%,100% { transform:translateY(0) scale(1) rotate(0deg); }
-  22% { transform:translateY(-.7px) scale(1.002) rotate(-.04deg); }
-  54% { transform:translateY(-1.35px) scale(1.005) rotate(.09deg); }
-  78% { transform:translateY(-.4px) scale(1.002) rotate(.02deg); }
+@keyframes cat-idle-sway {
+  0%,100% { transform:translateX(0) rotate(0deg); }
+  24% { transform:translateX(-1.2px) rotate(-.22deg); }
+  50% { transform:translateX(.75px) rotate(.14deg); }
+  76% { transform:translateX(1.4px) rotate(.24deg); }
 }
 
 @keyframes cat-natural-walk {
@@ -4191,10 +4171,9 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 @media (prefers-reduced-motion:reduce) {
-  .sky-scene .cat-wrap:not(.walking):not(.settling) .cat-idle,
+  .sky-scene .cat-wrap:not(.walking):not(.settling):not(.cat-star-birth):not(.cat-center-touch):not(.cat-turn-back) .cat-idle,
+  .sky-scene .cat-wrap:not(.walking):not(.settling):not(.cat-star-birth):not(.cat-center-touch):not(.cat-turn-back) .cat-art,
   .sky-scene .cat-wrap.walking .cat-art::before,
-  .sky-scene .cat-wrap.idle-gesture .cat-art,
-  .sky-scene .cat-wrap.idle-gesture .cat-art::before,
   .sky-scene .cat-wrap.walking::after,
   .sky-scene .cat-wrap.settling .cat-art,
   .sky-scene .cat-wrap.cat-star-birth .cat-art,
