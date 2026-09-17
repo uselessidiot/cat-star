@@ -1219,28 +1219,30 @@ export function SkyScene() {
           const hasPhoto = Boolean(activePhoto);
           return <>
             <button className="memory-close" type="button" aria-label="기억 닫기" onClick={closeSelectedStar}>×</button>
-            <figure className={`memory-photo${hasPhoto ? ' has-photo' : ' empty-photo'}${photos.length > 1 ? ' swipeable-photo' : ''}`} aria-label={`${selected.name}의 사진`} style={hasPhoto ? { backgroundImage: `url(${activePhoto})` } : undefined} onTouchStart={(event) => { event.stopPropagation(); handleDetailPhotoTouchStart(event); }} onTouchMove={(event) => event.stopPropagation()} onTouchEnd={(event) => { event.stopPropagation(); handleDetailPhotoTouchEnd(event, photos.length); }}>
-              {hasPhoto && <button className="memory-photo-open" type="button" aria-label="사진 크게 보기" onClick={() => setPhotoLightboxOpen(true)} />}
-              {!hasPhoto && <><span>✦</span><small>아직 비어 있는 별</small></>}
-              {photos.length > 1 && <>
-                <b>{photos.length}장의 기억</b>
-                <div className="memory-photo-nav" aria-label="기억 사진 넘기기">
-                  <button type="button" aria-label="이전 사진" onClick={() => shiftDetailPhoto(-1, photos.length)}>‹</button>
-                  <span>{activePhotoIndex + 1} / {photos.length}</span>
-                  <button type="button" aria-label="다음 사진" onClick={() => shiftDetailPhoto(1, photos.length)}>›</button>
-                </div>
-                <div className="memory-photo-dots" aria-hidden="true">
-                  {photos.map((photo, index) => <i key={`${photo}-${index}`} className={index === activePhotoIndex ? 'active' : ''} />)}
-                </div>
-              </>}
-            </figure>
-            <div className="memory-copy">
-              <i className="memory-detail-glint" aria-hidden="true">✦</i>
-              <span className="memory-kicker">{hasPhoto ? 'MEMORY STAR' : 'EMPTY STAR'} · {selected.date}</span>
-              <strong>{selected.name}</strong>
-              <em className={`activity-chip tone-${activityStyles[activityFor(selected)].tone}`}>{activityFor(selected)}</em>
-              <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 사진과 이야기를 담으면, 이 자리는 그대로 두고 조금 더 따뜻한 기억별로 살아나요.'}</p>
-              {hasPhoto ? <small className="memory-distance">{photos.length > 1 ? `${photos.length}장의 사진이 이 별 하나에 함께 머물러요` : '같은 활동의 별도 은은하게 빛나요'}</small> : <button className="fill-memory-button" type="button" onClick={() => openFillMemory(selected)}>별 채우기 <span>✦</span></button>}
+            <div className="memory-page">
+              <figure className={`memory-photo${hasPhoto ? ' has-photo' : ' empty-photo'}${photos.length > 1 ? ' swipeable-photo' : ''}`} aria-label={`${selected.name}의 사진`} style={hasPhoto ? { backgroundImage: `url(${activePhoto})` } : undefined} onTouchStart={(event) => { event.stopPropagation(); handleDetailPhotoTouchStart(event); }} onTouchMove={(event) => event.stopPropagation()} onTouchEnd={(event) => { event.stopPropagation(); handleDetailPhotoTouchEnd(event, photos.length); }}>
+                {hasPhoto && <button className="memory-photo-open" type="button" aria-label="사진 크게 보기" onClick={() => setPhotoLightboxOpen(true)} />}
+                {!hasPhoto && <><span>✦</span><small>아직 비어 있는 별</small></>}
+                {photos.length > 1 && <>
+                  <b>{photos.length}장의 기억</b>
+                  <div className="memory-photo-nav" aria-label="기억 사진 넘기기">
+                    <button type="button" aria-label="이전 사진" onClick={() => shiftDetailPhoto(-1, photos.length)}>‹</button>
+                    <span>{activePhotoIndex + 1} / {photos.length}</span>
+                    <button type="button" aria-label="다음 사진" onClick={() => shiftDetailPhoto(1, photos.length)}>›</button>
+                  </div>
+                  <div className="memory-photo-dots" aria-hidden="true">
+                    {photos.map((photo, index) => <i key={`${photo}-${index}`} className={index === activePhotoIndex ? 'active' : ''} />)}
+                  </div>
+                </>}
+              </figure>
+              <div className="memory-copy">
+                <i className="memory-detail-glint" aria-hidden="true">✦</i>
+                <span className="memory-kicker">{hasPhoto ? 'MEMORY STAR' : 'EMPTY STAR'} · {selected.date}</span>
+                <strong>{selected.name}</strong>
+                <em className={`activity-chip tone-${activityStyles[activityFor(selected)].tone}`}>{activityFor(selected)}</em>
+                <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 사진과 이야기를 담으면, 이 자리는 그대로 두고 조금 더 따뜻한 기억별로 살아나요.'}</p>
+                {hasPhoto ? <small className="memory-distance">{photos.length > 1 ? `${photos.length}장의 사진이 이 별 하나에 함께 머물러요` : '같은 활동의 별도 은은하게 빛나요'}</small> : <button className="fill-memory-button" type="button" onClick={() => openFillMemory(selected)}>별 채우기 <span>✦</span></button>}
+              </div>
             </div>
           </>;
         })()}

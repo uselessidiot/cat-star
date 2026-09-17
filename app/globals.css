@@ -5168,6 +5168,154 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   }
 }
 
+/* Memory page composition: the star becomes a small room, not a planet with a sticker. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  width:min(430px,calc(100vw - 34px)) !important;
+  height:min(430px,calc(100vw - 34px)) !important;
+  left:clamp(17px,calc(var(--detail-x,50%) - 215px),calc(100% - 447px)) !important;
+  border-radius:50% !important;
+  overflow:hidden !important;
+}
+.sky-scene .memory-detail::before {
+  inset:0 !important;
+  opacity:.52 !important;
+  background:url('/assets/memory-planet-v1.png') center / 112% no-repeat !important;
+  filter:brightness(.58) saturate(.68) contrast(1.08) blur(.2px) !important;
+}
+.sky-scene .memory-detail::after {
+  inset:5% !important;
+  border-color:rgba(255,230,192,.2) !important;
+  opacity:.56 !important;
+  transform:rotate(-13deg) !important;
+}
+.sky-scene .memory-page {
+  position:absolute;
+  z-index:3;
+  inset:42px 47px 38px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:17px 17px 13px;
+  border:1px solid rgba(255,236,207,.18);
+  border-radius:7px 21px 9px 18px;
+  background:linear-gradient(180deg,rgba(49,45,85,.34),rgba(35,31,67,.26));
+  box-shadow:0 13px 32px rgba(17,18,48,.2),inset 0 1px rgba(255,255,255,.12);
+  backdrop-filter:blur(4px) saturate(.86);
+  transform:rotate(-1.15deg);
+  animation:memory-page-unfold 1.05s cubic-bezier(.18,.8,.24,1) both;
+}
+.sky-scene .memory-page::before,
+.sky-scene .memory-page::after {
+  content:'';
+  position:absolute;
+  pointer-events:none;
+}
+.sky-scene .memory-page::before {
+  left:17px;
+  right:17px;
+  top:11px;
+  height:1px;
+  background:rgba(255,237,209,.19);
+}
+.sky-scene .memory-page::after {
+  right:12px;
+  bottom:11px;
+  width:42px;
+  height:1px;
+  background:rgba(255,220,181,.3);
+  box-shadow:-12px 4px rgba(255,220,181,.14),-24px 8px rgba(255,220,181,.08);
+}
+.sky-scene .memory-page .memory-photo,
+.sky-scene .memory-page.empty-detail .memory-photo {
+  position:relative !important;
+  left:auto !important;
+  top:auto !important;
+  width:100% !important;
+  height:154px !important;
+  min-height:0 !important;
+  flex:none;
+  transform:rotate(.7deg) !important;
+  border-radius:4px 13px 5px 10px !important;
+  border-color:rgba(255,238,211,.46) !important;
+  box-shadow:0 10px 22px rgba(17,17,48,.3),inset 0 1px rgba(255,255,255,.2) !important;
+}
+.sky-scene .memory-page .memory-photo::before { inset:-5px !important; border-radius:7px 15px 8px 12px !important; }
+.sky-scene .memory-page .memory-copy,
+.sky-scene .memory-page.empty-detail .memory-copy {
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  width:100% !important;
+  min-height:0 !important;
+  padding:14px 2px 0 !important;
+  align-items:flex-start !important;
+  text-align:left !important;
+}
+.sky-scene .memory-page .memory-detail-glint { margin:0 0 3px !important; font-size:10px !important; }
+.sky-scene .memory-page .memory-kicker {
+  width:100% !important;
+  margin:0 0 5px !important;
+  font-size:7px !important;
+  letter-spacing:.11em !important;
+}
+.sky-scene .memory-page strong {
+  max-width:100% !important;
+  padding:0 !important;
+  font-size:24px !important;
+  line-height:1.15 !important;
+}
+.sky-scene .memory-page .activity-chip { margin:7px 0 0 !important; }
+.sky-scene .memory-page p {
+  max-width:100% !important;
+  margin:9px 0 0 !important;
+  font-size:11px !important;
+  line-height:1.55 !important;
+}
+.sky-scene .memory-page .memory-distance {
+  width:100% !important;
+  margin:9px 0 0 !important;
+  padding-top:7px !important;
+  font-size:7px !important;
+  line-height:1.4 !important;
+}
+.sky-scene .memory-page .fill-memory-button { margin-top:10px !important; }
+.sky-scene .memory-page .memory-photo-nav { bottom:8px !important; }
+.sky-scene .memory-page .memory-photo-dots { bottom:40px !important; }
+.sky-scene .memory-page .memory-photo-open:hover { background:rgba(255,228,188,.06); }
+@keyframes memory-page-unfold {
+  from { opacity:0; transform:translateY(15px) rotate(-4deg) scale(.92); }
+  to { opacity:1; transform:translateY(0) rotate(-1.15deg) scale(1); }
+}
+@media (max-width:760px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:min(360px,calc(100vw - 26px)) !important;
+    height:min(360px,calc(100vw - 26px)) !important;
+    left:50% !important;
+  }
+  .sky-scene .memory-page { inset:34px 35px 30px; padding:13px 13px 10px; }
+  .sky-scene .memory-page .memory-photo { height:126px !important; }
+  .sky-scene .memory-page .memory-copy { padding-top:10px !important; }
+  .sky-scene .memory-page strong { font-size:20px !important; }
+  .sky-scene .memory-page p { font-size:10px !important; }
+}
+@media (max-width:390px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:calc(100vw - 20px) !important;
+    height:calc(100vw - 20px) !important;
+  }
+  .sky-scene .memory-page { inset:29px 27px 25px; padding:11px 11px 8px; }
+  .sky-scene .memory-page .memory-photo { height:108px !important; }
+  .sky-scene .memory-page strong { font-size:18px !important; }
+  .sky-scene .memory-page p { margin-top:7px !important; font-size:9px !important; }
+}
+
 /* A selected memory can open into a quiet photo-viewing moment. */
 .memory-photo.has-photo {
   cursor:zoom-in;
