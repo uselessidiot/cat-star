@@ -5442,6 +5442,122 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .sky-scene .memory-page p { font-size:8px !important; }
 }
 
+/* Return to a quieter memory card: the night sky stays singular, the memory stays readable. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  left:clamp(18px,calc(var(--detail-x,50%) - 215px),calc(100% - 448px)) !important;
+  width:min(430px,calc(100vw - 36px)) !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:22px 24px !important;
+  overflow:visible !important;
+  border:1px solid rgba(255,238,214,.18) !important;
+  border-radius:7px 24px 9px 20px !important;
+  background:linear-gradient(145deg,rgba(59,57,101,.68),rgba(58,45,81,.58)) !important;
+  box-shadow:0 20px 50px rgba(19,19,53,.24),0 0 34px rgba(255,194,158,.08),inset 0 1px rgba(255,255,255,.14) !important;
+  backdrop-filter:blur(15px) saturate(.9) !important;
+}
+.sky-scene .memory-detail::before {
+  inset:0 !important;
+  border-radius:inherit !important;
+  opacity:.6 !important;
+  background:
+    radial-gradient(circle at 7% 52%,rgba(255,218,168,.22),transparent 26%),
+    radial-gradient(circle at 90% 10%,rgba(215,170,208,.14),transparent 32%),
+    linear-gradient(120deg,rgba(255,241,211,.07),transparent 48%) !important;
+  filter:none !important;
+  box-shadow:none !important;
+}
+.sky-scene .memory-detail::after {
+  inset:10px !important;
+  border:1px solid rgba(255,230,192,.1) !important;
+  border-radius:4px 18px 6px 15px !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  opacity:.8 !important;
+  transform:none !important;
+}
+.sky-scene .memory-page {
+  position:relative !important;
+  inset:auto !important;
+  z-index:3;
+  display:grid !important;
+  grid-template-columns:150px minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:20px !important;
+  width:100% !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  transform:none !important;
+  animation:memory-card-arrive .7s cubic-bezier(.18,.8,.24,1) both !important;
+}
+.sky-scene .memory-page::before,
+.sky-scene .memory-page::after { display:none !important; }
+.sky-scene .memory-page .memory-photo {
+  width:150px !important;
+  height:116px !important;
+  transform:rotate(-1.5deg) !important;
+  border-radius:5px 14px 6px 12px !important;
+  border-color:rgba(255,239,215,.4) !important;
+  box-shadow:0 9px 22px rgba(15,16,46,.3),inset 0 1px rgba(255,255,255,.18) !important;
+}
+.sky-scene .memory-page .memory-photo::before { inset:-5px !important; border-radius:7px 16px 8px 14px !important; }
+.sky-scene .memory-page .memory-copy {
+  width:auto !important;
+  padding:0 !important;
+  align-items:flex-start !important;
+  text-align:left !important;
+  text-shadow:0 1px 10px rgba(15,16,46,.64) !important;
+}
+.sky-scene .memory-page .memory-detail-glint { margin:0 0 6px !important; font-size:10px !important; }
+.sky-scene .memory-page .memory-kicker { margin:0 0 7px !important; font-size:7px !important; }
+.sky-scene .memory-page strong { font-size:22px !important; line-height:1.2 !important; text-shadow:0 2px 14px rgba(12,13,43,.75) !important; }
+.sky-scene .memory-page .activity-chip { margin:8px 0 0 !important; }
+.sky-scene .memory-page p { margin:11px 0 0 !important; font-size:10px !important; line-height:1.6 !important; }
+.sky-scene .memory-page .memory-distance { margin:10px 0 0 !important; padding-top:7px !important; font-size:7px !important; }
+.sky-scene .memory-page .fill-memory-button { margin-top:12px !important; }
+@keyframes memory-card-arrive {
+  from { opacity:0; transform:translateY(10px) scale(.96); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+@media (max-width:760px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    left:16px !important;
+    right:16px !important;
+    bottom:76px !important;
+    width:auto !important;
+    padding:17px 18px !important;
+    border-radius:6px 20px 8px 17px !important;
+  }
+  .sky-scene .memory-page { grid-template-columns:112px minmax(0,1fr) !important; gap:14px !important; }
+  .sky-scene .memory-page .memory-photo { width:112px !important; height:90px !important; }
+  .sky-scene .memory-page .memory-detail-glint { display:none !important; }
+  .sky-scene .memory-page .memory-kicker { font-size:6.5px !important; }
+  .sky-scene .memory-page strong { font-size:18px !important; }
+  .sky-scene .memory-page p { margin-top:8px !important; font-size:9px !important; }
+}
+@media (max-width:390px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    left:12px !important;
+    right:12px !important;
+    bottom:68px !important;
+    padding:14px 15px !important;
+  }
+  .sky-scene .memory-page { grid-template-columns:92px minmax(0,1fr) !important; gap:11px !important; }
+  .sky-scene .memory-page .memory-photo { width:92px !important; height:76px !important; }
+  .sky-scene .memory-page strong { font-size:16px !important; }
+  .sky-scene .memory-page p { font-size:8px !important; line-height:1.45 !important; }
+}
+
 /* A selected memory can open into a quiet photo-viewing moment. */
 .memory-photo.has-photo {
   cursor:zoom-in;
