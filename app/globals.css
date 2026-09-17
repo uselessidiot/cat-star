@@ -5316,6 +5316,64 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .sky-scene .memory-page p { margin-top:7px !important; font-size:9px !important; }
 }
 
+/* Final cleanup: one sky, one memory page. Do not paint a second planet background. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  overflow:visible !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+}
+.sky-scene .memory-detail::before {
+  inset:-8% !important;
+  border-radius:50% !important;
+  opacity:1 !important;
+  background:
+    radial-gradient(circle at 50% 44%,rgba(255,214,164,.22),rgba(255,186,177,.1) 38%,transparent 68%),
+    radial-gradient(circle at 50% 50%,rgba(57,56,112,.26),transparent 71%) !important;
+  filter:blur(12px) !important;
+}
+.sky-scene .memory-detail::after {
+  inset:4% 2% !important;
+  border:1px solid rgba(255,226,190,.19) !important;
+  border-radius:50% !important;
+  background:transparent !important;
+  filter:none !important;
+  opacity:.48 !important;
+}
+.sky-scene .memory-page {
+  inset:38px 54px 34px !important;
+  border-color:rgba(255,233,203,.15) !important;
+  border-radius:6px 18px 8px 15px !important;
+  background:rgba(40,37,77,.12) !important;
+  box-shadow:0 12px 30px rgba(15,16,45,.12),inset 0 1px rgba(255,255,255,.1) !important;
+  backdrop-filter:blur(2px) saturate(.9) !important;
+}
+.sky-scene .memory-page::before,
+.sky-scene .memory-page::after { opacity:.45; }
+.sky-scene .memory-page .memory-photo {
+  box-shadow:0 8px 22px rgba(14,15,43,.3),inset 0 1px rgba(255,255,255,.18) !important;
+}
+.sky-scene .memory-page .memory-copy { text-shadow:0 1px 11px rgba(16,16,49,.65) !important; }
+.sky-scene .memory-page strong { text-shadow:0 2px 14px rgba(14,14,45,.8) !important; }
+.sky-scene .cat-wrap:not(.walking) .cat-art,
+.sky-scene .cat-wrap:not(.walking) .cat-art::before,
+.sky-scene .cat-wrap:not(.walking) .cat-walk-layer {
+  background:transparent !important;
+  background-image:none !important;
+}
+.sky-scene .cat-wrap:not(.walking) .cat-art::before { content:none !important; display:none !important; }
+.sky-scene .cat-wrap:not(.walking) .cat-walk-layer { opacity:0 !important; visibility:hidden !important; }
+.sky-scene .cat-wrap:not(.walking) { box-shadow:none !important; }
+@media (max-width:760px) {
+  .sky-scene .memory-page { inset:31px 39px 27px !important; }
+}
+@media (max-width:390px) {
+  .sky-scene .memory-page { inset:26px 30px 23px !important; }
+}
+
 /* A selected memory can open into a quiet photo-viewing moment. */
 .memory-photo.has-photo {
   cursor:zoom-in;
