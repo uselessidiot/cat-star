@@ -168,8 +168,32 @@ export function apiStarToStoredMemory(apiStar: ApiMemoryStar, fallback?: Partial
   };
 }
 
+export type ApiCatProfile = CatProfile & { id: string; portraitUrl?: string };
+
 export async function getApiCatProfile() {
-  return requestJson<CatProfile & { id: string }>('/api/cat-profile');
+  return requestJson<ApiCatProfile>('/api/cat-profile');
+}
+
+export type UpdateCatProfileInput = {
+  name?: string;
+  guardianName?: string;
+  metDate?: string;
+  birthday?: string;
+  description?: string;
+};
+
+export async function updateApiCatProfile(updates: UpdateCatProfileInput) {
+  const updated = await requestJson<ApiCatProfile>('/api/cat-profile', { method: 'PATCH', body: JSON.stringify(updates) });
+  announceApiMemoryChanged();
+  return updated;
+}
+
+export async function uploadApiCatProfilePortrait(file: File) {
+  const form = new FormData();
+  form.append('portrait', file);
+  const updated = await requestJson<ApiCatProfile>('/api/cat-profile/portrait', { method: 'POST', body: form });
+  announceApiMemoryChanged();
+  return updated;
 }
 
 export async function getApiMemories() {
