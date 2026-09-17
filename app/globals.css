@@ -5108,6 +5108,57 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   }
 }
 
+/* Memory space: quiet the sky and let Lulu become the companion in the scene. */
+.sky-scene:has(.memory-detail.visible) .memory-star:not(.selected) {
+  opacity:.18 !important;
+  filter:blur(.35px) saturate(.72) !important;
+  transition:opacity .8s var(--ease-soft),filter .8s var(--ease-soft);
+}
+.sky-scene:has(.memory-detail.visible) .constellations { opacity:.16; transition:opacity .8s var(--ease-soft); }
+.sky-scene:has(.memory-detail.visible) .sky-background { filter:brightness(.78) saturate(.78); transition:filter .9s var(--ease-soft); }
+.sky-scene .cat-wrap {
+  appearance:none;
+  -webkit-appearance:none;
+  padding:0 !important;
+  border:0 !important;
+  color:inherit;
+  background:transparent !important;
+  cursor:grab;
+  touch-action:none;
+}
+.sky-scene .cat-wrap:focus-visible {
+  outline:1px solid rgba(255,231,193,.72);
+  outline-offset:8px;
+  border-radius:50%;
+}
+.sky-scene .cat-wrap.cat-petting { cursor:grabbing; }
+.sky-scene .cat-wrap.cat-petting .cat-art {
+  animation:cat-petting-breathe 1.55s cubic-bezier(.2,.72,.28,1) infinite !important;
+}
+.sky-scene .cat-wrap.cat-petting::before {
+  content:'';
+  position:absolute;
+  z-index:0;
+  left:50%;
+  top:35%;
+  width:125%;
+  aspect-ratio:1;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(circle,rgba(255,218,164,.25),rgba(255,198,174,.1) 38%,transparent 70%);
+  transform:translate(-50%,-50%) scale(.74);
+  animation:cat-petting-glow 1.55s ease-in-out infinite;
+}
+@keyframes cat-petting-breathe {
+  0%,100% { transform:translateY(0) rotate(0deg) scale(1); }
+  45% { transform:translateY(-2px) rotate(-.7deg) scale(1.012); }
+  75% { transform:translateY(.5px) rotate(.45deg) scale(1.006); }
+}
+@keyframes cat-petting-glow {
+  0%,100% { opacity:.34; transform:translate(-50%,-50%) scale(.74); }
+  50% { opacity:.72; transform:translate(-50%,-50%) scale(1); }
+}
+
 @media (max-width:390px) {
   .sky-scene .memory-detail,
   .sky-scene .memory-detail.visit-left,

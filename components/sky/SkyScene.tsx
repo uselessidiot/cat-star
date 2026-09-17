@@ -247,6 +247,7 @@ export function SkyScene() {
   const [walking, setWalking] = useState(false);
   const [catSettling, setCatSettling] = useState(false);
   const [catMoment, setCatMoment] = useState<CatMoment | null>(null);
+  const [catPetting, setCatPetting] = useState(false);
   const [skyTime, setSkyTime] = useState<SkyTime>('afternoon');
   const [storyStep, setStoryStep] = useState(0);
   const [storyPulse, setStoryPulse] = useState(0);
@@ -260,6 +261,7 @@ export function SkyScene() {
   const settlingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catMomentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catMomentDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catPetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const detailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const travelAnimation = useRef<number | null>(null);
   const travelRef = useRef(0);
@@ -397,6 +399,7 @@ export function SkyScene() {
       if (settlingTimer.current) clearTimeout(settlingTimer.current);
       if (catMomentTimer.current) clearTimeout(catMomentTimer.current);
       if (catMomentDelayTimer.current) clearTimeout(catMomentDelayTimer.current);
+      if (catPetTimer.current) clearTimeout(catPetTimer.current);
       if (detailTimer.current) clearTimeout(detailTimer.current);
       if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
       if (travelAnimation.current != null) cancelAnimationFrame(travelAnimation.current);
@@ -579,6 +582,16 @@ export function SkyScene() {
     setSelectedId(null);
     setDetailPhotoIndex(0);
     setPhotoLightboxOpen(false);
+  }
+
+  function petCat() {
+    if (catPetTimer.current) clearTimeout(catPetTimer.current);
+    setCatPetting(true);
+    playCatMoment('center-touch', 1700);
+    catPetTimer.current = setTimeout(() => {
+      setCatPetting(false);
+      catPetTimer.current = null;
+    }, 1850);
   }
 
   function openCenterStar() {
@@ -1169,12 +1182,12 @@ export function SkyScene() {
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
-        <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} data-cat-motion={catMotion} aria-hidden="true">
+        <button className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}${catPetting ? ' cat-petting' : ''}`} type="button" aria-label="루루 쓰다듬기" aria-pressed={catPetting} data-cat-motion={catMotion} onPointerDown={(event) => { event.stopPropagation(); petCat(); }} onPointerUp={(event) => event.stopPropagation()} onPointerCancel={(event) => event.stopPropagation()} onPointerLeave={(event) => event.stopPropagation()}>
           <div className="cat-art">
             <span className="cat-walk-layer" aria-hidden="true" />
             <Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized />
           </div>
-        </div>
+        </button>
         <div className="horizon-haze" aria-hidden="true" />
       </section>
 
