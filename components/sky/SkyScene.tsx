@@ -224,6 +224,7 @@ export function SkyScene() {
   const [addedNotes, setAddedNotes] = useState<Record<number, string>>({});
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [detailPhotoIndex, setDetailPhotoIndex] = useState(0);
+  const [photoLightboxOpen, setPhotoLightboxOpen] = useState(false);
   const [detailReady, setDetailReady] = useState(false);
   const [centerOpen, setCenterOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -272,6 +273,8 @@ export function SkyScene() {
   const baseStars = memoryStars.map((star) => filledStars[star.id] ?? star);
   const allStars = [...baseStars, ...addedStars];
   const selected = allStars.find((star) => star.id === selectedId);
+  const selectedPhotos = selected ? photoUrls[selected.id] ?? [] : [];
+  const selectedPhoto = selectedPhotos.length ? selectedPhotos[Math.min(detailPhotoIndex, selectedPhotos.length - 1)] : null;
   const projected = allStars.map((star) => ({ star, ...project(star.x, star.y, depthFor(star.id, star.depth), travel) }));
   const dragPull = Math.min(1, Math.hypot(pan.x / 120, pan.y / 80));
   const dragSpread = 1 + dragPull * .045;
@@ -384,8 +387,8 @@ export function SkyScene() {
   }, []);
 
   useEffect(() => {
-    function closeOnEscape(event: globalThis.KeyboardEvent) {
-      if (event.key === 'Escape') { closeSelectedStar(); setCreateOpen(false); setCenterOpen(false); closeOpeningStory(); }
+  function closeOnEscape(event: globalThis.KeyboardEvent) {
+      if (event.key === 'Escape') { setPhotoLightboxOpen(false); closeSelectedStar(); setCreateOpen(false); setCenterOpen(false); closeOpeningStory(); }
     }
     document.addEventListener('keydown', closeOnEscape);
     return () => {
@@ -575,6 +578,7 @@ export function SkyScene() {
     setDetailReady(false);
     setSelectedId(null);
     setDetailPhotoIndex(0);
+    setPhotoLightboxOpen(false);
   }
 
   function openCenterStar() {
@@ -1203,6 +1207,7 @@ export function SkyScene() {
           return <>
             <button className="memory-close" type="button" aria-label="기억 닫기" onClick={closeSelectedStar}>×</button>
             <figure className={`memory-photo${hasPhoto ? ' has-photo' : ' empty-photo'}${photos.length > 1 ? ' swipeable-photo' : ''}`} aria-label={`${selected.name}의 사진`} style={hasPhoto ? { backgroundImage: `url(${activePhoto})` } : undefined} onTouchStart={(event) => { event.stopPropagation(); handleDetailPhotoTouchStart(event); }} onTouchMove={(event) => event.stopPropagation()} onTouchEnd={(event) => { event.stopPropagation(); handleDetailPhotoTouchEnd(event, photos.length); }}>
+              {hasPhoto && <button className="memory-photo-open" type="button" aria-label="사진 크게 보기" onClick={() => setPhotoLightboxOpen(true)} />}
               {!hasPhoto && <><span>✦</span><small>아직 비어 있는 별</small></>}
               {photos.length > 1 && <>
                 <b>{photos.length}장의 기억</b>
@@ -1227,6 +1232,13 @@ export function SkyScene() {
           </>;
         })()}
       </aside>
+      {photoLightboxOpen && selected && selectedPhoto && <dialog open className="memory-lightbox" aria-label={`${selected.name} 사진 크게 보기`}>
+        <button className="memory-lightbox-close" type="button" aria-label="사진 닫기" onClick={() => setPhotoLightboxOpen(false)}>×</button>
+        <figure>
+          <Image src={selectedPhoto} alt={`${selected.name}의 기억 사진`} fill sizes="min(720px, 100vw)" unoptimized />
+          <figcaption><span>MEMORY STAR · {selected.date}</span><strong>{selected.name}</strong><small>{selectedPhotos.length > 1 ? `${detailPhotoIndex + 1} / ${selectedPhotos.length}` : '기억 속 장면'}</small></figcaption>
+        </figure>
+      </dialog>}
       <aside className={`center-star-detail${centerOpen ? ' visible' : ''}${centerEditing ? ' editing' : ' center-world'}${centerTouched ? ' center-touched' : ''}`} aria-live="polite">
         {centerOpen && (centerEditing ? <form className="center-profile-form" onSubmit={saveCatProfileDetails}>
           <button className="center-close" type="button" aria-label="고양이별 편집 닫기" onClick={() => setCenterEditing(false)}>×</button>
