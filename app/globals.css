@@ -4848,3 +4848,271 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 .sky-scene .memory-detail strong { color:rgba(255,249,233,1) !important; text-shadow:0 1px 12px rgba(30,28,68,.58); }
 .sky-scene .memory-detail p { color:rgba(255,242,226,.86) !important; text-shadow:0 1px 9px rgba(30,28,68,.48); }
 .sky-scene .memory-detail .memory-distance { color:rgba(255,238,216,.74) !important; }
+
+/* Keep every memory element inside the planet surface instead of floating beside it. */
+.sky-scene .memory-detail::after {
+  inset:13% 1% !important;
+  border-color:rgba(255,229,195,.16) !important;
+  opacity:.42 !important;
+}
+.sky-scene .memory-detail .memory-photo,
+.sky-scene .memory-detail.empty-detail .memory-photo {
+  left:41px !important;
+  top:130px !important;
+  width:86px !important;
+  height:86px !important;
+  min-height:0 !important;
+  aspect-ratio:1 !important;
+  border-radius:50% !important;
+  border:1px solid rgba(255,239,214,.42) !important;
+  background-color:rgba(43,43,87,.34) !important;
+  box-shadow:0 5px 18px rgba(28,27,67,.24),inset 0 1px rgba(255,255,255,.2) !important;
+}
+.sky-scene .memory-detail .memory-photo::before {
+  content:'';
+  position:absolute;
+  inset:-7px;
+  z-index:-1;
+  border:1px solid rgba(255,223,183,.18);
+  border-radius:50%;
+  box-shadow:0 0 15px rgba(255,211,164,.16);
+}
+.sky-scene .memory-detail .memory-photo.has-photo {
+  background-position:center !important;
+  background-size:cover !important;
+  filter:saturate(.78) contrast(.94) !important;
+}
+.sky-scene .memory-detail .memory-photo.empty-photo {
+  background:radial-gradient(circle at 50% 45%,rgba(255,231,186,.42),rgba(191,158,190,.14) 42%,rgba(48,48,91,.18) 70%,transparent 73%) !important;
+  border-color:rgba(255,224,183,.26) !important;
+  opacity:.84 !important;
+}
+.sky-scene .memory-detail .memory-photo.empty-photo span { font-size:12px; text-shadow:0 0 13px rgba(255,220,161,.96); }
+.sky-scene .memory-detail .memory-photo.empty-photo small { display:none; }
+.sky-scene .memory-detail .memory-copy {
+  left:151px !important;
+  top:108px !important;
+  right:34px !important;
+  min-height:160px !important;
+}
+.sky-scene .memory-detail .memory-kicker {
+  max-width:150px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  font-size:7.5px !important;
+  letter-spacing:.09em !important;
+}
+.sky-scene .memory-detail strong { font-size:21px !important; }
+
+@media (max-width:760px) {
+  .sky-scene .memory-detail .memory-photo,
+  .sky-scene .memory-detail.empty-detail .memory-photo {
+    left:34px !important;
+    top:113px !important;
+    width:76px !important;
+    height:76px !important;
+  }
+  .sky-scene .memory-detail .memory-copy { left:143px !important; top:96px !important; right:25px !important; }
+  .sky-scene .memory-detail strong { font-size:18px !important; }
+}
+
+@media (max-width:390px) {
+  .sky-scene .memory-detail .memory-photo,
+  .sky-scene .memory-detail.empty-detail .memory-photo {
+    left:29px !important;
+    top:102px !important;
+    width:68px !important;
+    height:68px !important;
+  }
+  .sky-scene .memory-detail .memory-copy { left:128px !important; top:88px !important; right:21px !important; }
+  .sky-scene .memory-detail strong { font-size:16px !important; }
+}
+
+/* Keep the memory planet self-contained: a photo window above the written memory. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  left:clamp(20px,calc(var(--detail-x,50%) - 180px),calc(100% - 380px)) !important;
+  right:auto !important;
+  width:min(360px,calc(100vw - 40px)) !important;
+  height:min(360px,calc(100vw - 40px)) !important;
+  min-height:0 !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  border:0 !important;
+  border-radius:50% !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  transform:translate3d(0,-50%,0) scale(.94) !important;
+}
+.sky-scene .memory-detail.visible,
+.sky-scene .memory-detail.visible.visit-left,
+.sky-scene .memory-detail.visible.visit-right {
+  transform:translate3d(0,-50%,0) scale(1) !important;
+}
+.sky-scene .memory-detail::before {
+  inset:0 !important;
+  opacity:1 !important;
+  border-radius:50% !important;
+}
+.sky-scene .memory-detail::after {
+  inset:7% !important;
+  width:auto !important;
+  height:auto !important;
+  border-radius:50% !important;
+  transform:rotate(-17deg) !important;
+  opacity:.34 !important;
+}
+.sky-scene .memory-detail > * { position:absolute !important; }
+.sky-scene .memory-detail .memory-close {
+  top:24px !important;
+  right:25px !important;
+  z-index:6 !important;
+  width:34px !important;
+  height:34px !important;
+  font-size:21px !important;
+  color:rgba(255,245,227,.78) !important;
+  background:rgba(35,36,77,.2) !important;
+}
+.sky-scene .memory-detail .memory-photo,
+.sky-scene .memory-detail.empty-detail .memory-photo {
+  left:50% !important;
+  top:49px !important;
+  width:142px !important;
+  height:94px !important;
+  min-height:0 !important;
+  transform:translateX(-50%) !important;
+  aspect-ratio:auto !important;
+  border-radius:17px 20px 15px 21px !important;
+  border:1px solid rgba(255,239,214,.5) !important;
+  background-color:rgba(43,43,87,.3) !important;
+  box-shadow:0 7px 20px rgba(28,27,67,.27),inset 0 1px rgba(255,255,255,.2) !important;
+}
+.sky-scene .memory-detail .memory-photo::before {
+  inset:-6px !important;
+  border-radius:21px !important;
+}
+.sky-scene .memory-detail .memory-copy,
+.sky-scene .memory-detail.empty-detail .memory-copy {
+  left:34px !important;
+  right:34px !important;
+  top:171px !important;
+  min-height:0 !important;
+  padding:0 !important;
+  align-items:center !important;
+  text-align:center !important;
+}
+.sky-scene .memory-detail .memory-detail-glint { margin:0 0 5px !important; }
+.sky-scene .memory-detail .memory-kicker {
+  max-width:100% !important;
+  margin:0 0 7px !important;
+  font-size:7px !important;
+  letter-spacing:.1em !important;
+}
+.sky-scene .memory-detail strong {
+  max-width:100% !important;
+  padding:0 !important;
+  font-size:23px !important;
+  line-height:1.18 !important;
+}
+.sky-scene .memory-detail .activity-chip { margin:7px 0 0 !important; }
+.sky-scene .memory-detail p {
+  max-width:210px !important;
+  margin:10px auto 0 !important;
+  font-size:11px !important;
+  line-height:1.55 !important;
+}
+.sky-scene .memory-detail .memory-distance {
+  max-width:210px !important;
+  margin:9px auto 0 !important;
+  padding-top:7px !important;
+  font-size:7px !important;
+  line-height:1.35 !important;
+}
+.sky-scene .memory-detail.empty-detail .memory-photo {
+  background:radial-gradient(circle at 50% 45%,rgba(255,231,186,.38),rgba(191,158,190,.13) 42%,rgba(48,48,91,.17) 70%,transparent 73%) !important;
+}
+.sky-scene .memory-detail.empty-detail .memory-copy { top:156px !important; }
+.sky-scene .memory-detail.empty-detail p { max-width:220px !important; }
+.sky-scene .memory-detail.empty-detail .fill-memory-button { margin-top:10px !important; }
+
+@media (max-width:760px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    left:50% !important;
+    top:auto !important;
+    bottom:78px !important;
+    width:min(320px,calc(100vw - 32px)) !important;
+    height:min(320px,calc(100vw - 32px)) !important;
+    transform:translate3d(-50%,18px,0) scale(.94) !important;
+  }
+  .sky-scene .memory-detail.visible,
+  .sky-scene .memory-detail.visible.visit-left,
+  .sky-scene .memory-detail.visible.visit-right {
+    transform:translate3d(-50%,0,0) scale(1) !important;
+  }
+  .sky-scene .memory-detail .memory-close { top:21px !important; right:21px !important; }
+  .sky-scene .memory-detail .memory-photo { top:43px !important; width:126px !important; height:84px !important; }
+  .sky-scene .memory-detail .memory-copy { top:151px !important; left:28px !important; right:28px !important; }
+  .sky-scene .memory-detail.empty-detail .memory-copy { top:140px !important; }
+  .sky-scene .memory-detail strong { font-size:20px !important; }
+}
+
+@media (max-width:390px) {
+  .sky-scene .memory-detail .memory-photo { top:37px !important; width:112px !important; height:75px !important; }
+  .sky-scene .memory-detail .memory-copy { top:132px !important; left:23px !important; right:23px !important; }
+  .sky-scene .memory-detail.empty-detail .memory-copy { top:123px !important; }
+  .sky-scene .memory-detail strong { font-size:18px !important; }
+  .sky-scene .memory-detail p { font-size:10px !important; }
+}
+
+/* Tone the planet down so the photograph remains the first thing the eye reads. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  width:min(390px,calc(100vw - 40px)) !important;
+  height:min(390px,calc(100vw - 40px)) !important;
+  left:clamp(20px,calc(var(--detail-x,50%) - 195px),calc(100% - 410px)) !important;
+}
+.sky-scene .memory-detail::before {
+  filter:brightness(.72) saturate(.82) contrast(1.04) drop-shadow(0 18px 28px rgba(25,24,60,.38)) drop-shadow(0 0 18px rgba(213,147,138,.12)) !important;
+}
+.sky-scene .memory-detail::after { opacity:.22 !important; }
+.sky-scene .memory-detail .memory-photo.has-photo {
+  filter:brightness(.82) saturate(.78) contrast(1.02) !important;
+  box-shadow:0 8px 22px rgba(20,20,53,.34),inset 0 1px rgba(255,255,255,.18) !important;
+}
+.sky-scene .memory-detail .memory-photo.has-photo::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  border-radius:inherit;
+  background:linear-gradient(145deg,rgba(28,27,64,.06),rgba(26,24,57,.24));
+}
+.sky-scene .memory-detail .memory-copy {
+  text-shadow:0 1px 12px rgba(22,20,54,.72) !important;
+}
+.sky-scene .memory-detail strong { text-shadow:0 2px 16px rgba(18,17,50,.86) !important; }
+
+@media (max-width:760px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:min(340px,calc(100vw - 32px)) !important;
+    height:min(340px,calc(100vw - 32px)) !important;
+    left:50% !important;
+  }
+}
+
+@media (max-width:390px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:calc(100vw - 32px) !important;
+    height:calc(100vw - 32px) !important;
+  }
+}
