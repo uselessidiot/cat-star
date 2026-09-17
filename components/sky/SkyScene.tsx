@@ -8,6 +8,7 @@ import { catMotionCssVars, catMotionSprites, resolveCatMotion, type CatMoment } 
 import { activityFor, activityStyles, activityTags, constellationPairs, memoryStars, mobileStarPositions, starDepths, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
 import { createApiMemoryStar, fillApiMemoryStar, getApiCatProfile, getApiMemories, validateMemoryPhotos } from '@/lib/memory-api';
+import { AuthPanel } from '@/components/auth/AuthPanel';
 
 const MAX_TRAVEL = 2.18;
 const END_STORY_GATE = MAX_TRAVEL - .045;
@@ -1120,6 +1121,7 @@ export function SkyScene() {
           <button className="replay-opening" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={replayOpeningStory}>처음 이야기 <span>✦</span></button>
           <button className="add-memory" type="button" onPointerDown={(event) => event.stopPropagation()} onClick={openCreatorForNewStar}><span>＋</span> 기억별 만들기</button>
           <a className="memory-library" href="/memories">다시 보는 기억</a>
+          <AuthPanel />
         </nav>
       </header>
 
