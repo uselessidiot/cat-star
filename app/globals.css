@@ -5374,6 +5374,74 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .sky-scene .memory-page { inset:26px 30px 23px !important; }
 }
 
+/* Scale the memory world down and turn its outer orbit into a small planet. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  width:min(350px,calc(100vw - 42px)) !important;
+  height:min(350px,calc(100vw - 42px)) !important;
+  left:clamp(21px,calc(var(--detail-x,50%) - 175px),calc(100% - 371px)) !important;
+}
+.sky-scene .memory-detail::before {
+  inset:0 !important;
+  border-radius:50% !important;
+  opacity:1 !important;
+  background:
+    radial-gradient(ellipse at 30% 22%,rgba(255,219,172,.23),transparent 24%),
+    radial-gradient(ellipse at 72% 78%,rgba(209,137,166,.24),transparent 42%),
+    radial-gradient(circle at 46% 42%,rgba(84,70,124,.9),rgba(45,43,91,.96) 68%,rgba(24,28,64,.98)) !important;
+  filter:none !important;
+  box-shadow:
+    inset -18px -15px 35px rgba(15,18,52,.46),
+    inset 10px 9px 23px rgba(255,224,180,.08),
+    0 12px 35px rgba(18,18,54,.2) !important;
+}
+.sky-scene .memory-detail::after {
+  inset:-4% !important;
+  border-color:rgba(255,224,188,.16) !important;
+  opacity:.7 !important;
+  box-shadow:0 0 0 7px rgba(255,220,183,.05),0 0 0 15px rgba(118,106,164,.08) !important;
+}
+.sky-scene .memory-page {
+  inset:28px 34px 25px !important;
+  padding:11px 12px 9px !important;
+  border-color:rgba(255,234,204,.14) !important;
+  background:rgba(37,35,73,.12) !important;
+  box-shadow:0 9px 24px rgba(13,14,43,.14),inset 0 1px rgba(255,255,255,.08) !important;
+}
+.sky-scene .memory-page .memory-photo { height:116px !important; }
+.sky-scene .memory-page .memory-copy { padding-top:9px !important; }
+.sky-scene .memory-page .memory-detail-glint { font-size:9px !important; }
+.sky-scene .memory-page .memory-kicker { font-size:6.5px !important; }
+.sky-scene .memory-page strong { font-size:20px !important; }
+.sky-scene .memory-page .activity-chip { margin-top:5px !important; }
+.sky-scene .memory-page p { margin-top:7px !important; font-size:9px !important; line-height:1.45 !important; }
+.sky-scene .memory-page .memory-distance { margin-top:7px !important; padding-top:5px !important; font-size:6.5px !important; }
+@media (max-width:760px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:min(310px,calc(100vw - 28px)) !important;
+    height:min(310px,calc(100vw - 28px)) !important;
+    left:50% !important;
+  }
+  .sky-scene .memory-page { inset:25px 28px 21px !important; padding:9px 10px 7px !important; }
+  .sky-scene .memory-page .memory-photo { height:101px !important; }
+  .sky-scene .memory-page strong { font-size:18px !important; }
+}
+@media (max-width:390px) {
+  .sky-scene .memory-detail,
+  .sky-scene .memory-detail.visit-left,
+  .sky-scene .memory-detail.visit-right {
+    width:calc(100vw - 22px) !important;
+    height:calc(100vw - 22px) !important;
+  }
+  .sky-scene .memory-page { inset:22px 24px 19px !important; }
+  .sky-scene .memory-page .memory-photo { height:90px !important; }
+  .sky-scene .memory-page strong { font-size:16px !important; }
+  .sky-scene .memory-page p { font-size:8px !important; }
+}
+
 /* A selected memory can open into a quiet photo-viewing moment. */
 .memory-photo.has-photo {
   cursor:zoom-in;
