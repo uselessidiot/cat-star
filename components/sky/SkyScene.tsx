@@ -514,7 +514,7 @@ export function SkyScene() {
   }
 
   function beginWalking(duration = 560) {
-    const walkingDuration = Math.max(duration, 360);
+    const walkingDuration = Math.max(duration, 900);
     clearCatMoment();
     setWalking(true);
     setCatSettling(false);
@@ -1156,15 +1156,18 @@ export function SkyScene() {
               data-depth={starDepths[star.id] ?? 'far'} data-distance={distance < .03 ? 'passed' : selectable ? 'close' : 'far'} data-memory={hasPhoto ? 'filled' : 'empty'}
               data-mobile-label={isMobileLabelStar ? 'true' : undefined}
               className={`memory-star shape-${visual.shape} tone-${visual.tone}${star.favorite ? ' favorite' : ''}${hasPhoto ? ' filled' : ' empty'}${star.created ? ' created' : ''}${bornIds.includes(star.id) ? ' newly-born' : ''}${selectedId === star.id ? ' selected' : ''}${related ? ' tag-related' : ''}${selectedId && selectedId !== star.id && !related ? ' dimmed' : ''}`}
-              style={{ left:`${x}%`, top:`${y}%`, opacity, '--depth-scale': scale, '--mobile-x':`${mobile.x}%`, '--mobile-y':`${mobile.y}%`, '--star-size':`${star.size}px`, '--twinkle-delay':`${(-((star.id * 1.37) % 8)).toFixed(2)}s`, '--twinkle-duration':`${(5.4 + (star.id % 5) * 1.1).toFixed(1)}s`, '--arrival-delay':`${120 + star.id * 42}ms` } as CSSProperties}
+              style={{ left:`${x}%`, top:`${y}%`, opacity, '--depth-scale': scale, '--label-scale': Math.min(1, 1 / Math.max(scale, 1)).toFixed(3), '--mobile-x':`${mobile.x}%`, '--mobile-y':`${mobile.y}%`, '--star-size':`${star.size}px`, '--twinkle-delay':`${(-((star.id * 1.37) % 8)).toFixed(2)}s`, '--twinkle-duration':`${(5.4 + (star.id % 5) * 1.1).toFixed(1)}s`, '--arrival-delay':`${120 + star.id * 42}ms` } as CSSProperties}
               aria-label={`${star.name}, ${star.date}${selectable ? ', 가까운 기억' : ', 멀리 있는 기억, 가까이 이동'}`} aria-pressed={selectedId === star.id}
-              onClick={() => handleMemoryStarClick(star, selectable)}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '지금 열어볼 수 있어요' : '기억을 기다려요' : '조금 더 가까이'}</small></span></button>;
+              onClick={() => handleMemoryStarClick(star, selectable)}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '기억이 떠올라요' : '별을 채울 수 있어요' : '조금 더 가까이'}</small></span></button>;
           })}
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
         <div className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}`} data-cat-motion={catMotion} aria-hidden="true">
-          <div className="cat-art"><Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized /></div>
+          <div className="cat-art">
+            <span className="cat-walk-layer" aria-hidden="true" />
+            <Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized />
+          </div>
         </div>
         <div className="horizon-haze" aria-hidden="true" />
       </section>
@@ -1198,7 +1201,7 @@ export function SkyScene() {
           return <>
             <button className="memory-close" type="button" aria-label="기억 닫기" onClick={closeSelectedStar}>×</button>
             <figure className={`memory-photo${hasPhoto ? ' has-photo' : ' empty-photo'}${photos.length > 1 ? ' swipeable-photo' : ''}`} aria-label={`${selected.name}의 사진`} style={hasPhoto ? { backgroundImage: `url(${activePhoto})` } : undefined} onTouchStart={(event) => { event.stopPropagation(); handleDetailPhotoTouchStart(event); }} onTouchMove={(event) => event.stopPropagation()} onTouchEnd={(event) => { event.stopPropagation(); handleDetailPhotoTouchEnd(event, photos.length); }}>
-              {!hasPhoto && <><span>✦</span><small>기억을 기다리는 별</small></>}
+              {!hasPhoto && <><span>✦</span><small>아직 비어 있는 별</small></>}
               {photos.length > 1 && <>
                 <b>{photos.length}장의 기억</b>
                 <div className="memory-photo-nav" aria-label="기억 사진 넘기기">
@@ -1213,10 +1216,10 @@ export function SkyScene() {
             </figure>
             <div className="memory-copy">
               <i className="memory-detail-glint" aria-hidden="true">✦</i>
-              <span className="memory-kicker">{hasPhoto ? 'MEMORY STAR' : 'WAITING STAR'} · {selected.date}</span>
+              <span className="memory-kicker">{hasPhoto ? 'MEMORY STAR' : 'EMPTY STAR'} · {selected.date}</span>
               <strong>{selected.name}</strong>
               <em className={`activity-chip tone-${activityStyles[activityFor(selected)].tone}`}>{activityFor(selected)}</em>
-              <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 기억을 담으면 이 자리에서 조금 더 따뜻하게 빛나요.'}</p>
+              <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 사진과 이야기를 담으면, 이 자리는 그대로 두고 조금 더 따뜻한 기억별로 살아나요.'}</p>
               {hasPhoto ? <small className="memory-distance">{photos.length > 1 ? `${photos.length}장의 사진이 이 별 하나에 함께 머물러요` : '같은 활동의 별도 은은하게 빛나요'}</small> : <button className="fill-memory-button" type="button" onClick={() => openFillMemory(selected)}>별 채우기 <span>✦</span></button>}
             </div>
           </>;
