@@ -172,6 +172,13 @@ export async function getApiCatProfile() {
   return requestJson<CatProfile & { id: string }>('/api/cat-profile');
 }
 
+export async function updateApiCatProfile(profile: Pick<CatProfile, 'name' | 'guardianName' | 'metDate' | 'birthday' | 'description'>) {
+  return requestJson<CatProfile & { id: string }>('/api/cat-profile', {
+    method: 'PATCH',
+    body: JSON.stringify(profile),
+  });
+}
+
 export async function getApiMemories() {
   const stars = await requestJson<ApiMemoryStar[]>('/api/memory-stars');
   return stars.map((star) => apiStarToStoredMemory(star));

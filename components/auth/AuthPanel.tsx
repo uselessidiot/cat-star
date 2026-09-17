@@ -75,7 +75,7 @@ export function AuthPanel() {
       setSession({ authenticated: true, isAnonymous: false, email: result.email ?? trimmedEmail });
       setPassword('');
       setOpen(false);
-      if (mode === 'login') window.dispatchEvent(new CustomEvent(MEMORY_STORE_CHANGED));
+      window.dispatchEvent(new CustomEvent(MEMORY_STORE_CHANGED));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '잠시 후 다시 시도해 주세요.');
     } finally {

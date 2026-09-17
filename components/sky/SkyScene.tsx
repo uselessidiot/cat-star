@@ -7,7 +7,7 @@ import { CatStarOpening, CAT_STAR_OPENING_SEEN } from '@/components/sky/CatStarO
 import { catMotionCssVars, catMotionSprites, resolveCatMotion, type CatMoment } from '@/lib/cat-motion';
 import { activityFor, activityStyles, activityTags, constellationPairs, memoryStars, mobileStarPositions, starDepths, type ActivityTag, type MemoryStarData } from '@/lib/memory-stars';
 import { deleteStoredMemory, getStoredCatProfile, getStoredMemories, MEMORY_STORE_CHANGED, saveStoredCatProfile, saveStoredMemories, type CatProfile } from '@/lib/memory-store';
-import { createApiMemoryStar, fillApiMemoryStar, getApiCatProfile, getApiMemories, validateMemoryPhotos } from '@/lib/memory-api';
+import { createApiMemoryStar, fillApiMemoryStar, getApiCatProfile, getApiMemories, updateApiCatProfile, validateMemoryPhotos } from '@/lib/memory-api';
 import { AuthPanel } from '@/components/auth/AuthPanel';
 
 const MAX_TRAVEL = 2.18;
@@ -747,9 +747,17 @@ export function SkyScene() {
       description: profileDraft.description.trim() || '이 별은 함께한 모든 기억이 돌아오는 중심이에요.',
       portrait: profilePortraitBlob,
     };
-    await saveStoredCatProfile(nextProfile);
-    setCatProfile(nextProfile);
-    setProfileDraft(nextProfile);
+    try {
+      const saved = await updateApiCatProfile(nextProfile);
+      const syncedProfile = { ...nextProfile, ...saved };
+      await saveStoredCatProfile(syncedProfile);
+      setCatProfile(syncedProfile);
+      setProfileDraft(syncedProfile);
+    } catch {
+      await saveStoredCatProfile(nextProfile);
+      setCatProfile(nextProfile);
+      setProfileDraft(nextProfile);
+    }
     setCenterEditing(false);
   }
 
