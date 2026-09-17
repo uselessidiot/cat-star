@@ -4183,6 +4183,63 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   }
 }
 
+/* Cat ghosting fix: use exactly one visible cat layer per motion state. */
+.sky-scene .cat-art,
+.sky-scene .cat-wrap.walking .cat-art {
+  background-image:none !important;
+  background:none !important;
+  overflow:visible;
+}
+
+.sky-scene .cat-art::before {
+  content:'' !important;
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  opacity:0;
+  visibility:hidden;
+  background:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) 0 0 / 400% 100% no-repeat !important;
+  filter:brightness(.74) saturate(.68) contrast(.92) drop-shadow(0 5px 10px rgba(28,30,58,.16));
+  pointer-events:none;
+  transition:none !important;
+  will-change:background-position,transform;
+}
+
+.sky-scene .cat-idle {
+  position:relative;
+  z-index:2;
+  opacity:1;
+  visibility:visible !important;
+  transition:filter .42s var(--ease-soft),transform .42s var(--ease-soft) !important;
+}
+
+.sky-scene .cat-wrap.walking .cat-art::before {
+  opacity:.96 !important;
+  visibility:visible !important;
+  animation:walk-frames var(--cat-walk-duration,2.12s) steps(3,end) infinite,cat-natural-walk 1.42s ease-in-out infinite !important;
+}
+
+.sky-scene .cat-wrap.walking .cat-idle {
+  opacity:0 !important;
+  visibility:hidden !important;
+  animation:none !important;
+  transition:none !important;
+}
+
+.sky-scene .cat-wrap:not(.walking) .cat-art::before,
+.sky-scene .cat-wrap.settling .cat-art::before {
+  opacity:0 !important;
+  visibility:hidden !important;
+  animation:none !important;
+}
+
+.sky-scene .cat-wrap.settling .cat-idle,
+.sky-scene .cat-wrap:not(.walking) .cat-idle {
+  opacity:1 !important;
+  visibility:visible !important;
+}
+
 /* Star map polish: remove the visible dot grid and make nearby labels feel like constellation markers. */
 .sky-scene .stardust,
 .sky-scene .depth-far,
@@ -4200,46 +4257,48 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 }
 
 .sky-scene .star-label {
-  top:28px;
+  top:22px !important;
   display:grid;
-  min-width:128px;
-  max-width:168px;
-  padding:15px 0 0 44px;
-  border:0;
-  border-radius:0;
+  width:max-content !important;
+  min-width:128px !important;
+  max-width:168px !important;
+  padding:25px 0 0 56px !important;
+  border:0 !important;
+  border-radius:0 !important;
   color:rgba(255,246,221,.86);
-  background:transparent;
-  box-shadow:none;
-  backdrop-filter:none;
+  background:transparent !important;
+  box-shadow:none !important;
+  backdrop-filter:none !important;
+  outline:0 !important;
   text-align:left;
-  transform:translate(2px,13px);
+  transform:translate(10px,18px) !important;
   text-shadow:0 0 10px rgba(255,218,168,.16),0 1px 8px rgba(24,24,54,.44);
 }
 
 .sky-scene .star-label::before {
   content:'';
   position:absolute;
-  left:2px;
-  top:2px;
-  width:38px;
+  left:-18px;
+  top:0;
+  width:66px;
   height:1px;
-  background:linear-gradient(90deg,rgba(255,225,170,.72),rgba(255,225,170,.16));
-  box-shadow:0 0 8px rgba(255,215,154,.22);
-  transform:rotate(31deg);
+  background:linear-gradient(90deg,rgba(255,225,170,.78),rgba(255,225,170,.34) 58%,rgba(255,225,170,.08));
+  box-shadow:0 0 9px rgba(255,215,154,.24);
+  transform:rotate(35deg);
   transform-origin:left center;
 }
 
 .sky-scene .star-label::after {
   content:'';
   position:absolute;
-  left:31px;
-  top:15px;
-  width:7px;
-  height:7px;
+  left:36px;
+  top:30px;
+  width:8px;
+  height:8px;
   border:1px solid rgba(255,232,187,.6);
   border-radius:50%;
   background:rgba(255,238,203,.28);
-  box-shadow:0 0 10px rgba(255,221,165,.32),18px 10px 0 -3px rgba(255,238,203,.36);
+  box-shadow:0 0 11px rgba(255,221,165,.34),22px 11px 0 -3px rgba(255,238,203,.32);
 }
 
 .sky-scene .star-label strong,
@@ -4266,30 +4325,59 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
 .sky-scene .memory-star[data-distance='close']:hover .star-label,
 .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
 .sky-scene .memory-star[data-distance='close'].selected .star-label {
-  transform:translate(8px,7px);
+  transform:translate(16px,11px) !important;
 }
 
-@media (max-width:640px) {
+@media (max-width:760px) {
+  .sky-scene .memory-star .star-label,
+  .sky-scene .memory-star[data-distance='close'] .star-label,
+  .sky-scene .memory-star[data-distance='close']:hover .star-label,
+  .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
+  .sky-scene .memory-star[data-distance='close'].selected .star-label,
+  .sky-scene .memory-star[data-distance='close']:not(.dimmed) .star-label,
+  .sky-scene .memory-star[data-mobile-label='true']:not(.dimmed) .star-label {
+    display:grid !important;
+    top:20px !important;
+    width:max-content !important;
+    min-width:102px !important;
+    max-width:126px !important;
+    padding:21px 0 0 43px !important;
+    border:0 !important;
+    border-radius:0 !important;
+    color:rgba(255,246,221,.84) !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    backdrop-filter:none !important;
+    outline:0 !important;
+    transform:translate(8px,15px) !important;
+  }
+
+  .sky-scene .memory-star[data-mobile-label='true']:not(.dimmed) .star-label {
+    opacity:.76 !important;
+    visibility:visible !important;
+  }
+
   .sky-scene .star-label {
-    top:24px;
-    min-width:102px;
-    max-width:126px;
-    padding:12px 0 0 34px;
-    transform:translate(0,11px);
+    top:20px !important;
+    min-width:102px !important;
+    max-width:126px !important;
+    padding:21px 0 0 43px !important;
+    transform:translate(8px,15px) !important;
   }
 
   .sky-scene .star-label::before {
-    width:29px;
-    top:2px;
-    transform:rotate(32deg);
+    left:-14px;
+    top:0;
+    width:52px;
+    transform:rotate(35deg);
   }
 
   .sky-scene .star-label::after {
-    left:24px;
-    top:12px;
-    width:6px;
-    height:6px;
-    box-shadow:0 0 8px rgba(255,221,165,.28),14px 8px 0 -3px rgba(255,238,203,.32);
+    left:29px;
+    top:24px;
+    width:7px;
+    height:7px;
+    box-shadow:0 0 8px rgba(255,221,165,.28),17px 9px 0 -3px rgba(255,238,203,.32);
   }
 
   .sky-scene .star-label strong {
@@ -4298,6 +4386,7 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   }
 
   .sky-scene .star-label small {
+    display:block !important;
     max-width:104px;
     font-size:8px;
   }
@@ -4305,6 +4394,295 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .sky-scene .memory-star[data-distance='close']:hover .star-label,
   .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
   .sky-scene .memory-star[data-distance='close'].selected .star-label {
-    transform:translate(6px,6px);
+    transform:translate(13px,9px) !important;
+  }
+}
+
+/* UX pass: star names should feel like handwritten light, without the extra circular marker. */
+.sky-scene .star-label {
+  padding-left:42px !important;
+  text-shadow:
+    0 0 12px rgba(255,218,168,.2),
+    0 1px 10px rgba(24,24,54,.5);
+}
+
+.sky-scene .star-label::before {
+  left:-16px !important;
+  width:72px !important;
+  opacity:.62;
+  background:linear-gradient(90deg,rgba(255,228,184,.58),rgba(255,226,178,.2) 62%,transparent) !important;
+  box-shadow:0 0 10px rgba(255,215,154,.16) !important;
+}
+
+.sky-scene .star-label::after {
+  content:none !important;
+  display:none !important;
+}
+
+.sky-scene .memory-star[data-memory='empty'] .star-label small {
+  color:rgba(255,226,190,.64);
+}
+
+.sky-scene .memory-star.selected .star-label {
+  color:rgba(255,249,230,.92);
+}
+
+/* UX pass: visiting a star should recall a memory, not open a heavy popup. */
+.sky-scene .memory-detail {
+  border-color:rgba(255,250,236,.1) !important;
+  background:
+    radial-gradient(circle at 9% 49%,rgba(255,227,181,.16),transparent 32%),
+    radial-gradient(circle at 72% 6%,rgba(255,252,235,.12),transparent 38%),
+    linear-gradient(145deg,rgba(255,242,224,.28),rgba(239,205,218,.16)) !important;
+  box-shadow:
+    0 16px 42px rgba(50,48,80,.08),
+    0 0 72px rgba(255,214,174,.065),
+    inset 0 1px rgba(255,255,255,.18) !important;
+  backdrop-filter:blur(12px) saturate(.92) !important;
+  filter:blur(10px);
+  transition:
+    opacity 1.25s var(--ease-soft),
+    transform 1.35s var(--ease-soft),
+    filter 1.2s var(--ease-soft) !important;
+}
+
+.sky-scene .memory-detail.visible {
+  opacity:.9;
+  filter:blur(0);
+}
+
+.sky-scene .memory-detail::before {
+  opacity:.1 !important;
+}
+
+.sky-scene .memory-detail::after {
+  width:148px !important;
+  height:148px !important;
+  opacity:.38 !important;
+  filter:blur(24px) !important;
+}
+
+.sky-scene .memory-detail.empty-detail {
+  background:
+    radial-gradient(circle at 15% 50%,rgba(255,230,188,.12),transparent 36%),
+    linear-gradient(145deg,rgba(255,242,223,.26),rgba(237,207,216,.16)) !important;
+}
+
+.sky-scene .memory-detail.empty-detail .memory-photo {
+  border-color:rgba(255,248,230,.13) !important;
+  box-shadow:
+    0 10px 24px rgba(73,66,99,.07),
+    0 0 32px rgba(219,209,239,.055),
+    inset 0 0 28px rgba(255,230,202,.06) !important;
+}
+
+.sky-scene .memory-detail.empty-detail .memory-photo span {
+  color:rgba(255,241,206,.78);
+  text-shadow:0 0 17px rgba(255,219,164,.58);
+}
+
+.sky-scene .memory-detail.empty-detail p {
+  color:rgba(71,63,86,.61) !important;
+}
+
+.sky-scene .fill-memory-button {
+  min-height:38px;
+  margin-top:20px;
+  border-color:rgba(205,148,119,.18) !important;
+  background:linear-gradient(90deg,rgba(255,237,212,.43),rgba(248,212,213,.26)) !important;
+  box-shadow:
+    0 8px 21px rgba(77,64,91,.055),
+    0 0 30px rgba(255,204,152,.13),
+    inset 0 1px rgba(255,255,255,.34) !important;
+}
+
+.sky-scene .fill-memory-button:hover {
+  transform:translateY(-1px);
+}
+
+@media (max-width:760px) {
+  .sky-scene .star-label {
+    padding-left:34px !important;
+  }
+
+  .sky-scene .star-label::before {
+    left:-12px !important;
+    width:56px !important;
+  }
+
+  .sky-scene .star-label::after {
+    content:none !important;
+    display:none !important;
+  }
+}
+
+/* Final pass: keep the cat walk visible without double-exposure, and keep star labels responsive. */
+.sky-scene .cat-art {
+  position:relative !important;
+  background:none !important;
+  background-image:none !important;
+}
+
+.sky-scene .cat-art::before {
+  display:none !important;
+  content:none !important;
+}
+
+.sky-scene .cat-walk-layer {
+  position:absolute;
+  inset:0;
+  z-index:1;
+  display:block;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  background:var(--cat-walk-sprite,url('/assets/cat-walk-sprite-v2.png')) 0 0 / 400% 100% no-repeat;
+  filter:brightness(.74) saturate(.68) contrast(.92) drop-shadow(0 5px 10px rgba(28,30,58,.16));
+  transform-origin:50% 100%;
+  will-change:background-position,transform,opacity;
+}
+
+.sky-scene .cat-wrap.walking .cat-art {
+  background:none !important;
+  background-image:none !important;
+  animation:cat-visible-walk-body 1.12s ease-in-out infinite !important;
+}
+
+.sky-scene .cat-wrap.walking .cat-walk-layer {
+  opacity:.96 !important;
+  visibility:visible !important;
+  animation:
+    cat-walk-frames 1.12s linear infinite,
+    cat-visible-walk-frame 1.12s ease-in-out infinite !important;
+}
+
+/* Four sprite cells require 0, 1/3, 2/3, and 100% background positions. */
+@keyframes cat-walk-frames {
+  0%,24.99% { background-position:0 0; }
+  25%,49.99% { background-position:33.333% 0; }
+  50%,74.99% { background-position:66.667% 0; }
+  75%,100% { background-position:100% 0; }
+}
+
+.sky-scene .cat-wrap.walking .cat-idle {
+  opacity:0 !important;
+  visibility:hidden !important;
+  animation:none !important;
+  transition:none !important;
+}
+
+.sky-scene .cat-wrap:not(.walking) .cat-art {
+  background:none !important;
+  background-image:none !important;
+}
+
+.sky-scene .cat-wrap:not(.walking) .cat-walk-layer,
+.sky-scene .cat-wrap.settling .cat-walk-layer {
+  opacity:0 !important;
+  visibility:hidden !important;
+  animation:none !important;
+}
+
+.sky-scene .cat-wrap:not(.walking) .cat-idle,
+.sky-scene .cat-wrap.settling .cat-idle {
+  z-index:2;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+
+.sky-scene .star-label {
+  min-width:clamp(88px,11vw,128px) !important;
+  max-width:clamp(104px,13vw,144px) !important;
+  padding-top:clamp(14px,2vw,21px) !important;
+  padding-left:clamp(28px,3.7vw,42px) !important;
+  transform:translate(12px,10px) scale(var(--label-scale,1)) !important;
+  transform-origin:0 0 !important;
+}
+
+.sky-scene .memory-star[data-distance='close']:hover .star-label,
+.sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
+.sky-scene .memory-star[data-distance='close'].selected .star-label {
+  transform:translate(14px,8px) scale(var(--label-scale,1)) !important;
+}
+
+.sky-scene .star-label strong {
+  max-width:clamp(86px,11vw,124px) !important;
+  font-size:clamp(9px,1.08vw,11px) !important;
+  line-height:1.26 !important;
+  letter-spacing:.01em !important;
+}
+
+.sky-scene .star-label small {
+  max-width:clamp(86px,11vw,124px) !important;
+  font-size:clamp(7px,.82vw,8.5px) !important;
+  line-height:1.25 !important;
+  opacity:.56 !important;
+}
+
+.sky-scene .star-label::before {
+  left:clamp(-12px,-1.2vw,-8px) !important;
+  width:clamp(42px,5.2vw,60px) !important;
+}
+
+@media (max-width:760px) {
+  .sky-scene .star-label,
+  .sky-scene .memory-star .star-label,
+  .sky-scene .memory-star[data-distance='close'] .star-label,
+  .sky-scene .memory-star[data-mobile-label='true']:not(.dimmed) .star-label {
+    min-width:82px !important;
+    max-width:108px !important;
+    padding-top:14px !important;
+    padding-left:26px !important;
+    transform:translate(7px,8px) scale(var(--label-scale,1)) !important;
+  }
+
+  .sky-scene .memory-star[data-distance='close']:hover .star-label,
+  .sky-scene .memory-star[data-distance='close']:focus-visible .star-label,
+  .sky-scene .memory-star[data-distance='close'].selected .star-label {
+    transform:translate(8px,7px) scale(var(--label-scale,1)) !important;
+  }
+
+  .sky-scene .star-label strong {
+    max-width:86px !important;
+    font-size:8.6px !important;
+    line-height:1.2 !important;
+  }
+
+  .sky-scene .star-label small {
+    max-width:86px !important;
+    font-size:7px !important;
+    line-height:1.18 !important;
+  }
+
+  .sky-scene .star-label::before {
+    left:-9px !important;
+    width:38px !important;
+    opacity:.46 !important;
+  }
+}
+
+@keyframes cat-visible-walk-body {
+  0%,100% {
+    transform:translateX(calc(var(--cat-step-x,0px) * .2)) translateY(0) rotate(calc(var(--cat-lean,0deg) * .35));
+  }
+  25% {
+    transform:translateX(calc(var(--cat-step-x,0px) + 1.5px)) translateY(-3.2px) rotate(calc(var(--cat-counter-lean,0deg) * .7));
+  }
+  50% {
+    transform:translateX(calc(var(--cat-step-x,0px) * -.25)) translateY(.8px) rotate(calc(var(--cat-lean,0deg) * .42));
+  }
+  75% {
+    transform:translateX(calc(var(--cat-step-x,0px) * -.75 - 1.2px)) translateY(-2.2px) rotate(calc(var(--cat-counter-lean,0deg) * .45));
+  }
+}
+
+@keyframes cat-visible-walk-frame {
+  0%,100% {
+    transform:translateY(0) scaleX(1);
+    filter:brightness(.74) saturate(.68) contrast(.92) drop-shadow(0 5px 10px rgba(28,30,58,.16));
+  }
+  50% {
+    transform:translateY(-1.4px) scaleX(1.006);
+    filter:brightness(.78) saturate(.7) contrast(.94) drop-shadow(0 7px 12px rgba(28,30,58,.18));
   }
 }
