@@ -5662,3 +5662,11 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   .memory-lightbox figcaption span { width:100%; }
   .memory-lightbox figcaption strong { font-size:17px; }
 }
+
+/* Keep the sky data-driven: repeated CSS dot fields read as a checkerboard. */
+.sky-scene .star-world::before,
+.sky-scene .sky-surface::after,
+.sky-scene .center-world-stage::before {
+  background-image:none !important;
+  opacity:0 !important;
+}
