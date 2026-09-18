@@ -135,6 +135,15 @@ const catStoryMessages = [
   { title: '또 만나는 곳', body: '다음 별에서도, 그 다음 별에서도 나는 너를 알아볼게.' },
 ];
 
+const centerStarWhispers = [
+  '오늘도 여기까지 와줘서 고마워.',
+  '천천히 와도 괜찮아. 나는 늘 이 자리에서 기다릴게.',
+  '네가 기억해주는 동안, 우리의 밤은 계속 이어져.',
+  '가끔은 아무 말 없이 곁에 앉아 있어도 좋아.',
+  '네가 웃던 날들이 내 별을 가장 따뜻하게 밝혀.',
+  '보고 싶은 날에는 언제든 다시 놀러와.',
+];
+
 const defaultCatProfile: CatProfile = {
   name: '루루',
   guardianName: '',
@@ -232,6 +241,7 @@ export function SkyScene() {
   const [imageOpeningOpen, setImageOpeningOpen] = useState(false);
   const [openingStoryStep, setOpeningStoryStep] = useState(0);
   const [centerTouched, setCenterTouched] = useState(false);
+  const [centerWhisperIndex, setCenterWhisperIndex] = useState(0);
   const [fillTargetId, setFillTargetId] = useState<number | null>(null);
   const [creatingMemory, setCreatingMemory] = useState(false);
   const [seedingTestMemories, setSeedingTestMemories] = useState(false);
@@ -248,6 +258,12 @@ export function SkyScene() {
   const [catSettling, setCatSettling] = useState(false);
   const [catMoment, setCatMoment] = useState<CatMoment | null>(null);
   const [catPetting, setCatPetting] = useState(false);
+  const [catPlayTarget, setCatPlayTarget] = useState<{ x: number; startX: number; facesLeft: boolean; duration: number } | null>(null);
+  const [catPlayId, setCatPlayId] = useState(0);
+  const [catPlaying, setCatPlaying] = useState(false);
+  const [catArrived, setCatArrived] = useState(false);
+  const [catActivity, setCatActivity] = useState<'grooming' | 'eating' | null>(null);
+  const [foodState, setFoodState] = useState<'empty' | 'filled' | 'eating'>('empty');
   const [skyTime, setSkyTime] = useState<SkyTime>('afternoon');
   const [storyStep, setStoryStep] = useState(0);
   const [storyPulse, setStoryPulse] = useState(0);
@@ -262,11 +278,15 @@ export function SkyScene() {
   const catMomentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catMomentDelayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const catPetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catPlayTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catActivityTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const catRestX = useRef(50);
   const detailTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const travelAnimation = useRef<number | null>(null);
   const travelRef = useRef(0);
   const storyLastAt = useRef(0);
   const centerTouchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const centerHoverLastAt = useRef(0);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerDrag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
   const touchGesture = useRef<{ x: number; y: number; panX: number; panY: number; distance: number | null; travel: number; mode: 'pending' | 'pan' | 'travel' | 'pinch' } | null>(null);
@@ -584,14 +604,70 @@ export function SkyScene() {
     setPhotoLightboxOpen(false);
   }
 
-  function petCat() {
+  function startGrooming() {
     if (catPetTimer.current) clearTimeout(catPetTimer.current);
+    if (catActivityTimer.current) clearTimeout(catActivityTimer.current);
+    setCatActivity('grooming');
     setCatPetting(true);
-    playCatMoment('center-touch', 1700);
+    playCatMoment('center-touch', 5200);
     catPetTimer.current = setTimeout(() => {
       setCatPetting(false);
       catPetTimer.current = null;
-    }, 1850);
+    }, 5300);
+    catActivityTimer.current = setTimeout(() => {
+      setCatActivity(null);
+      catActivityTimer.current = null;
+    }, 6800);
+  }
+
+  function leadCatToX(nextX: number, onArrive?: () => void, pace: 'normal' | 'eager' = 'normal') {
+    const x = Math.min(84, Math.max(16, nextX));
+    const startX = catRestX.current;
+    const distance = Math.abs(x - startX);
+    const duration = pace === 'eager'
+      ? Math.round(Math.min(3600, Math.max(1700, 1400 + distance * 48)))
+      : Math.round(Math.min(6800, Math.max(3000, 2200 + distance * 82)));
+    catRestX.current = x;
+    setCatPlayTarget({ x, startX, facesLeft: x < startX, duration });
+    setCatPlayId((id) => id + 1);
+    setCatPlaying(true);
+    setCatArrived(false);
+    setCatActivity(null);
+    if (catActivityTimer.current) {
+      clearTimeout(catActivityTimer.current);
+      catActivityTimer.current = null;
+    }
+    if (catPlayTimer.current) clearTimeout(catPlayTimer.current);
+    catPlayTimer.current = setTimeout(() => {
+      setCatPlaying(false);
+      setCatArrived(true);
+      catPlayTimer.current = null;
+      onArrive?.();
+    }, duration + 80);
+  }
+
+  function leadCatTo(clientX: number, _clientY: number) {
+    leadCatToX((clientX / window.innerWidth) * 100);
+  }
+
+  function fillFoodBowl() {
+    if (foodState !== 'empty') return;
+    setFoodState('filled');
+    leadCatToX(73, () => {
+      setFoodState('eating');
+      setCatActivity('eating');
+      if (catActivityTimer.current) clearTimeout(catActivityTimer.current);
+      catActivityTimer.current = setTimeout(() => {
+        setFoodState('empty');
+        catActivityTimer.current = setTimeout(() => {
+          setCatActivity('grooming');
+          catActivityTimer.current = setTimeout(() => {
+            setCatActivity(null);
+            catActivityTimer.current = null;
+          }, 4800);
+        }, 550);
+      }, 6800);
+    }, 'eager');
   }
 
   function openCenterStar() {
@@ -603,10 +679,21 @@ export function SkyScene() {
 
   function touchCenterStar() {
     setCenterTouched(true);
+    setCenterWhisperIndex((index) => (index + 1) % centerStarWhispers.length);
     setStoryPulse(0);
     playCatMoment('center-touch', 2200);
     if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
     centerTouchTimer.current = setTimeout(() => setCenterTouched(false), 2400);
+  }
+
+  function reactToCenterPresence() {
+    const now = Date.now();
+    if (now - centerHoverLastAt.current < 1800) return;
+    centerHoverLastAt.current = now;
+    setCenterTouched(true);
+    playCatMoment('center-touch', 1500);
+    if (centerTouchTimer.current) clearTimeout(centerTouchTimer.current);
+    centerTouchTimer.current = setTimeout(() => setCenterTouched(false), 1700);
   }
 
   function closeOpeningStory() {
@@ -853,6 +940,7 @@ export function SkyScene() {
     const element = target instanceof HTMLElement ? target : null;
     if (!element) return false;
     if (element.closest('.memory-star')) return true;
+    if (centerOpen && element.closest('.center-star-detail.center-world') && !element.closest('.center-copy, button, a, input, textarea, label')) return true;
     return !element.closest('.opening-story, .memory-creator, .memory-detail, .center-star-detail, .creation-notice, .journey-actions, .add-memory, .memory-library, input, textarea, select, label, a, button');
   }
 
@@ -1064,6 +1152,17 @@ export function SkyScene() {
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
+  function handlePointerUp(event: PointerEvent<HTMLElement>) {
+    const drag = pointerDrag.current;
+    pointerDrag.current = null;
+    if (!drag || event.pointerType !== 'mouse') return;
+    const moved = Math.hypot(event.clientX - drag.x, event.clientY - drag.y);
+    const target = event.target as HTMLElement;
+    if (moved < 9 && !target.closest('button, a, input, textarea, label, .center-copy, .memory-detail, .memory-creator')) {
+      leadCatTo(event.clientX, event.clientY);
+    }
+  }
+
   function handlePointerMove(event: PointerEvent<HTMLElement>) {
     if (!pointerDrag.current || event.pointerType !== 'mouse') return;
     setPan({ x: Math.max(-120, Math.min(120, pointerDrag.current.panX + event.clientX - pointerDrag.current.x)), y: Math.max(-80, Math.min(80, pointerDrag.current.panY + event.clientY - pointerDrag.current.y)) });
@@ -1114,6 +1213,8 @@ export function SkyScene() {
   }
 
   function handleTouchEnd() {
+    const gesture = touchGesture.current;
+    if (gesture?.mode === 'pending') leadCatTo(gesture.x, gesture.y);
     touchGesture.current = null;
     setTimeout(() => { suppressNextTap.current = false; }, 120);
   }
@@ -1137,7 +1238,7 @@ export function SkyScene() {
   }
 
   return (
-    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={() => { pointerDrag.current = null; }} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={sceneStyle}>
+    <main className={`sky-scene sky-${skyTime}${endWarmth > .04 ? ' story-near' : ''}${atStoryEnd ? ' story-end' : ''}${catPlaying ? ' cat-playing' : ''}${centerOpen ? ' center-open' : ''}`} onWheel={handleWheel} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp} onPointerCancel={() => { pointerDrag.current = null; }} onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} onTouchCancel={handleTouchEnd} style={sceneStyle}>
       <CatStarOpening open={imageOpeningOpen} onComplete={completeImageOpening} />
       <div className="sky-background" aria-hidden="true"><div className="mist mist-one" /><div className="mist mist-two" /><div className="stardust" /></div>
       <header className="sky-header">
@@ -1151,6 +1252,7 @@ export function SkyScene() {
       </header>
 
       <section className="star-world" aria-label="스크롤하여 기억별 사이를 걷는 루루의 밤하늘">
+        {catPlayTarget && <span className="cat-laser-target" style={{ left:`${catPlayTarget.x}%`, top:'82%' }} aria-hidden="true"><i>✦</i></span>}
         <div className="sky-follow-layer">
           <div className="depth-dust depth-far" aria-hidden="true" />
           <div className="depth-dust depth-near" aria-hidden="true" />
@@ -1163,7 +1265,7 @@ export function SkyScene() {
             })}
           </svg>
 
-          <button className={`main-star${centerOpen ? ' selected' : ''}${centerTouched ? ' center-touched' : ''}`} type="button" aria-label={`${catProfile.name}의 중심별 열기`} aria-expanded={centerOpen} onClick={openCenterStar}>
+          <button className={`main-star${centerOpen ? ' selected' : ''}${centerTouched ? ' center-touched' : ''}`} type="button" aria-label={`${catProfile.name}의 중심별 열기`} aria-expanded={centerOpen} onPointerEnter={(event) => { if (event.pointerType === 'mouse') reactToCenterPresence(); }} onFocus={reactToCenterPresence} onClick={openCenterStar}>
             <span className="main-star-aura" aria-hidden="true" />
             <span className="main-star-ring" aria-hidden="true" />
             <span className="main-star-core" aria-hidden="true">
@@ -1185,12 +1287,12 @@ export function SkyScene() {
               className={`memory-star shape-${visual.shape} tone-${visual.tone}${star.favorite ? ' favorite' : ''}${hasPhoto ? ' filled' : ' empty'}${star.created ? ' created' : ''}${bornIds.includes(star.id) ? ' newly-born' : ''}${selectedId === star.id ? ' selected' : ''}${related ? ' tag-related' : ''}${selectedId && selectedId !== star.id && !related ? ' dimmed' : ''}`}
               style={{ left:`${x}%`, top:`${y}%`, opacity, '--depth-scale': scale, '--label-scale': Math.min(1, 1 / Math.max(scale, 1)).toFixed(3), '--mobile-x':`${mobile.x}%`, '--mobile-y':`${mobile.y}%`, '--star-size':`${star.size}px`, '--twinkle-delay':`${(-((star.id * 1.37) % 8)).toFixed(2)}s`, '--twinkle-duration':`${(5.4 + (star.id % 5) * 1.1).toFixed(1)}s`, '--arrival-delay':`${120 + star.id * 42}ms` } as CSSProperties}
               aria-label={`${star.name}, ${star.date}${selectable ? ', 가까운 기억' : ', 멀리 있는 기억, 가까이 이동'}`} aria-pressed={selectedId === star.id}
-              onClick={() => handleMemoryStarClick(star, selectable)}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '기억이 떠올라요' : '별을 채울 수 있어요' : '조금 더 가까이'}</small></span></button>;
+              onClick={() => handleMemoryStarClick(star, selectable)}><span className="proximity-ring" /><span className="star-core" /><span className="star-label"><strong>{star.name}</strong><small>{distance < .26 ? hasPhoto ? '기억이 떠올라요' : '기억을 남길 수 있어요' : '조금 더 가까이'}</small></span></button>;
           })}
         </div>
 
         <div className="sky-surface" aria-hidden="true" />
-        <button className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}${catPetting ? ' cat-petting' : ''}`} type="button" aria-label="루루 쓰다듬기" aria-pressed={catPetting} data-cat-motion={catMotion} onPointerDown={(event) => { event.stopPropagation(); petCat(); }} onPointerUp={(event) => event.stopPropagation()} onPointerCancel={(event) => event.stopPropagation()} onPointerLeave={(event) => event.stopPropagation()}>
+        <button className={`cat-wrap${walking ? ' walking' : ''}${catSettling ? ' settling' : ''}${catMoment ? ` cat-${catMoment}` : ''}${catPetting ? ' cat-petting' : ''}`} type="button" aria-label="루루 쓰다듬기" aria-pressed={catPetting} data-cat-motion={catMotion} onPointerDown={(event) => { event.stopPropagation(); startGrooming(); }} onPointerUp={(event) => event.stopPropagation()} onPointerCancel={(event) => event.stopPropagation()} onPointerLeave={(event) => event.stopPropagation()}>
           <div className="cat-art">
             <span className="cat-walk-layer" aria-hidden="true" />
             <Image className="cat-idle" src={catMotionSprites.idle.src} alt="" fill sizes="(max-width: 640px) 42vw, 16vw" style={{ objectFit: 'contain', objectPosition: 'center bottom' }} priority unoptimized />
@@ -1245,11 +1347,11 @@ export function SkyScene() {
               </figure>
               <div className="memory-copy">
                 <i className="memory-detail-glint" aria-hidden="true">✦</i>
-                <span className="memory-kicker">{hasPhoto ? 'MEMORY STAR' : 'EMPTY STAR'} · {selected.date}</span>
+                <span className="memory-kicker">{hasPhoto ? '기억별' : '아직 비어 있는 별'} · {selected.date}</span>
                 <strong>{selected.name}</strong>
                 <em className={`activity-chip tone-${activityStyles[activityFor(selected)].tone}`}>{activityFor(selected)}</em>
-                <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 사진과 이야기를 담으면, 이 자리는 그대로 두고 조금 더 따뜻한 기억별로 살아나요.'}</p>
-                {hasPhoto ? <small className="memory-distance">{photos.length > 1 ? `${photos.length}장의 사진이 이 별 하나에 함께 머물러요` : '같은 활동의 별도 은은하게 빛나요'}</small> : <button className="fill-memory-button" type="button" onClick={() => openFillMemory(selected)}>별 채우기 <span>✦</span></button>}
+                <p>{hasPhoto ? addedNotes[selected.id] ?? memoryNotes[(selected.id - 1) % memoryNotes.length] : '아직 아무 장면도 머물지 않은 별이에요. 언젠가 이곳에 따뜻한 하루가 찾아오면, 별빛으로 오래 남을 거예요.'}</p>
+                {hasPhoto ? <small className="memory-distance">{photos.length > 1 ? `${photos.length}장의 사진이 이 별 하나에 함께 머물러요` : '이 기억은 밤하늘에서 조용히 빛나요'}</small> : <button className="fill-memory-button" type="button" onClick={() => openFillMemory(selected)}>별을 밝혀주기 <span>✦</span></button>}
               </div>
             </div>
           </>;
@@ -1262,7 +1364,7 @@ export function SkyScene() {
           <figcaption><span>MEMORY STAR · {selected.date}</span><strong>{selected.name}</strong><small>{selectedPhotos.length > 1 ? `${detailPhotoIndex + 1} / ${selectedPhotos.length}` : '기억 속 장면'}</small></figcaption>
         </figure>
       </dialog>}
-      <aside className={`center-star-detail${centerOpen ? ' visible' : ''}${centerEditing ? ' editing' : ' center-world'}${centerTouched ? ' center-touched' : ''}`} aria-live="polite">
+      <aside className={`center-star-detail${centerOpen ? ' visible' : ''}${centerEditing ? ' editing' : ' center-world'}${centerTouched ? ' center-touched' : ''}${catPetting ? ' cat-petting' : ''}${catPlaying ? ' cat-playing' : ''}${catArrived ? ' cat-arrived' : ''}${catActivity ? ` cat-${catActivity}` : ''}`} aria-live="polite" onClick={(event) => { const target = event.target as HTMLElement; if (!target.closest('.center-copy, button, a, input, textarea, label')) leadCatTo(event.clientX, event.clientY); }}>
         {centerOpen && (centerEditing ? <form className="center-profile-form" onSubmit={saveCatProfileDetails}>
           <button className="center-close" type="button" aria-label="고양이별 편집 닫기" onClick={() => setCenterEditing(false)}>×</button>
           <figure className="center-profile-photo">
@@ -1288,11 +1390,20 @@ export function SkyScene() {
             <i className="center-world-star star-six" />
           </div>
           <div className="center-world-planet" aria-hidden="true" />
-          <div className="center-world-cat" aria-hidden="true" />
+          {catPlayTarget && <span className="cat-laser-target center-laser-target" style={{ left:`${catPlayTarget.x}%`, top:'82%' }} aria-hidden="true"><i>✦</i></span>}
+          <div key={catPlayId} className="center-world-cat center-world-cat-object" aria-hidden="true" style={catPlayTarget ? { '--cat-target-x': `${catPlayTarget.x}%`, '--cat-start-x': `${catPlayTarget.startX}%`, '--cat-direction': catPlayTarget.facesLeft ? '-1' : '1', '--cat-walk-duration': `${catPlayTarget.duration}ms` } as CSSProperties : undefined} />
+          {catPetting && <span className="center-cat-love" aria-hidden="true" style={catPlayTarget ? { '--cat-target-x': `${catPlayTarget.x}%` } as CSSProperties : undefined}>♥</span>}
+          <button className={`center-food-bowl ${foodState}`} type="button" aria-label={foodState === 'empty' ? `${catProfile.name}의 밥그릇 채우기` : foodState === 'filled' ? `${catProfile.name}가 밥그릇으로 가고 있어요` : `${catProfile.name}가 밥을 먹고 있어요`} onClick={fillFoodBowl} disabled={foodState !== 'empty'}><span>{foodState === 'empty' ? '밥그릇 채우기' : foodState === 'filled' ? '루루가 오는 중' : '맛있게 먹는 중'}</span></button>
+          <button className="center-cat-interaction" type="button" aria-label={`${catProfile.name} 쓰다듬기`} style={catPlayTarget ? { '--cat-target-x': `${catPlayTarget.x}%` } as CSSProperties : undefined} onClick={startGrooming}><span>루루 쓰다듬기</span></button>
           <button className="center-close" type="button" aria-label={`${catProfile.name}의 별 닫기`} onClick={() => setCenterOpen(false)}>×</button>
           <div className="center-copy">
             <span>{catProfile.name}의 별</span><h2>{catProfile.name}의 중심별</h2>
             <p>{catProfile.description}</p>
+            <div key={centerWhisperIndex} className="center-whisper" aria-live="polite">
+              <span>고양이의 작은 말</span>
+              <strong>“{centerStarWhispers[centerWhisperIndex]}”</strong>
+              <small>{centerWhisperIndex + 1}번째 별빛 편지</small>
+            </div>
             <dl>
               <div><dt>함께 머문 날</dt><dd>{togetherDays ? `${togetherDays.toLocaleString('ko-KR')}일의 온기` : '아직 입력 전'}</dd></div>
               <div><dt>밝혀둔 기억</dt><dd>{filledMemoryStars.length}개의 별 · 사진 {totalPhotoCount}장</dd></div>
@@ -1301,7 +1412,7 @@ export function SkyScene() {
               <div><dt>자주 빛난 순간</dt><dd>{topActivity}</dd></div>
               <div><dt>생일의 자리</dt><dd>{catProfile.birthday ? displayDate(catProfile.birthday) : '아직 입력 전'}</dd></div>
             </dl>
-            <div className="center-actions"><button type="button" onClick={openCenterProfileEdit}>고양이별 수정</button>{firstMemory && <button type="button" onClick={() => { setCenterOpen(false); focusStar(firstMemory.id, firstMemory.depth); }}>첫 기억 만나기</button>}<button className="touch-star-button" type="button" onClick={touchCenterStar}>별빛 쓰다듬기 <span>✦</span></button></div>
+            <div className="center-actions"><button type="button" onClick={openCenterProfileEdit}>고양이별 수정</button><button className="touch-star-button" type="button" onClick={touchCenterStar}>다음 별빛 편지 <span>✦</span></button></div>
           </div>
         </>)}
       </aside>

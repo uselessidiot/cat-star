@@ -5670,3 +5670,337 @@ button, a { -webkit-tap-highlight-color: transparent; } button { font: inherit; 
   background-image:none !important;
   opacity:0 !important;
 }
+
+/* Memory cards: a quiet page in the sky, not a dark modal panel. */
+.sky-scene .memory-detail,
+.sky-scene .memory-detail.visit-left,
+.sky-scene .memory-detail.visit-right {
+  border:0 !important;
+  background:linear-gradient(145deg,rgba(87,76,124,.34),rgba(71,57,96,.26)) !important;
+  box-shadow:0 18px 48px rgba(19,19,53,.16),0 0 32px rgba(255,205,171,.1) !important;
+  backdrop-filter:blur(18px) saturate(.95) !important;
+}
+.sky-scene .memory-detail::after { display:none !important; }
+.sky-scene .memory-detail::before {
+  opacity:.72 !important;
+  background:
+    radial-gradient(circle at 12% 42%,rgba(255,225,183,.28),transparent 28%),
+    radial-gradient(circle at 86% 18%,rgba(231,191,219,.2),transparent 32%),
+    linear-gradient(120deg,rgba(255,244,220,.12),transparent 52%) !important;
+  filter:blur(2px) !important;
+}
+.sky-scene .memory-page .memory-kicker { color:rgba(255,232,208,.74) !important; }
+.sky-scene .memory-page strong { color:rgba(255,249,235,.96) !important; }
+.sky-scene .memory-page p { color:rgba(255,240,225,.8) !important; }
+.sky-scene .memory-page .memory-distance { color:rgba(255,232,208,.66) !important; }
+.sky-scene .memory-page .fill-memory-button { margin-top:14px !important; }
+
+/* Keep the special cat star aligned with the quiet center of the sky illustration. */
+.sky-scene .main-star {
+  left:50% !important;
+  top:15% !important;
+}
+@media (max-width:640px) {
+  .sky-scene .main-star { left:50% !important; top:14% !important; }
+}
+
+/* The cat's star has its own gentle ritual: each visit reveals one short letter. */
+.center-whisper {
+  display:grid;
+  gap:5px;
+  margin-top:14px;
+  padding:11px 12px 10px;
+  border-left:1px solid rgba(255,224,181,.48);
+  color:rgba(255,242,220,.82);
+  background:linear-gradient(90deg,rgba(255,214,172,.12),transparent 82%);
+  animation:center-whisper-in .55s var(--ease-soft) both;
+}
+.center-whisper span {
+  font-size:8px !important;
+  letter-spacing:.14em !important;
+  color:rgba(255,219,181,.64) !important;
+  opacity:1 !important;
+}
+.center-whisper strong {
+  font:400 13px/1.55 Georgia,'Noto Serif KR',serif !important;
+  color:rgba(255,246,229,.9) !important;
+  text-shadow:0 1px 10px rgba(25,25,61,.38) !important;
+}
+.center-whisper small {
+  font-size:8px;
+  letter-spacing:.08em;
+  color:rgba(255,229,202,.5);
+}
+.center-star-detail.center-touched .center-whisper { animation:center-whisper-in .7s var(--ease-soft) both; }
+@keyframes center-whisper-in {
+  from { opacity:0; transform:translateY(5px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@media (max-width:640px) {
+  .center-whisper { margin-top:10px; padding:9px 10px 8px; }
+  .center-whisper strong { font-size:12px !important; }
+}
+
+/* Interaction target over the cat in the center-star illustration. */
+.center-star-detail.center-world .center-cat-interaction {
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:2%;
+  width:190px;
+  height:185px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  color:rgba(255,244,222,.72);
+  background:transparent;
+  cursor:pointer;
+  transform:translateX(-50%);
+}
+.center-star-detail.center-world.cat-arrived .center-cat-interaction,
+.center-star-detail.center-world.cat-grooming .center-cat-interaction { left:var(--cat-target-x,50%); }
+.center-star-detail.center-world.cat-eating .center-cat-interaction { opacity:0; pointer-events:none; }
+.center-star-detail.center-world .center-cat-interaction::before {
+  content:'';
+  position:absolute;
+  inset:23% 18% 8%;
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,212,165,.22),rgba(255,190,164,.1) 42%,transparent 72%);
+  opacity:0;
+  filter:blur(10px);
+  transition:opacity .5s var(--ease-soft),transform .5s var(--ease-soft);
+}
+.center-star-detail.center-world .center-cat-interaction span {
+  position:absolute;
+  left:50%;
+  bottom:8%;
+  padding:6px 10px;
+  border:1px solid rgba(255,239,213,.16);
+  border-radius:999px;
+  color:rgba(255,241,219,.7);
+  background:rgba(50,47,78,.26);
+  font-size:9px;
+  letter-spacing:.06em;
+  opacity:0;
+  transform:translate(-50%,5px);
+  transition:opacity .45s var(--ease-soft),transform .45s var(--ease-soft);
+  backdrop-filter:blur(8px);
+}
+.center-star-detail.center-world .center-cat-interaction:hover::before,
+.center-star-detail.center-world .center-cat-interaction:focus-visible::before,
+.center-star-detail.center-world.cat-petting .center-cat-interaction::before { opacity:1; transform:scale(1.08); }
+.center-star-detail.center-world .center-cat-interaction:hover span,
+.center-star-detail.center-world .center-cat-interaction:focus-visible span { opacity:1; transform:translate(-50%,0); }
+.center-star-detail.center-world.cat-petting .center-cat-interaction::before { animation:center-cat-warmth 1.8s var(--ease-soft) both; }
+.center-star-detail.center-world .center-cat-interaction:focus-visible { outline:1px solid rgba(255,234,201,.56); outline-offset:5px; }
+@keyframes center-cat-warmth {
+  0% { opacity:.18; transform:scale(.92); }
+  42% { opacity:.82; transform:scale(1.08); }
+  100% { opacity:.32; transform:scale(1); }
+}
+@media (max-width:760px) {
+  .center-star-detail.center-world .center-cat-interaction { width:170px; height:150px; bottom:3%; }
+  .center-star-detail.center-world .center-cat-interaction span { opacity:.72; transform:translate(-50%,0); }
+}
+
+/* Replace the embedded hero with a real, interactive cat object and a star hideout. */
+.center-star-detail.center-world {
+  background-image:url('/assets/center-world/lulu-main-sky-clean-no-hero.png') !important;
+  background-position:center center !important;
+}
+.sky-scene.center-open > .cat-wrap {
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+}
+.center-star-detail.center-world .center-world-cat-object {
+  display:block !important;
+  position:absolute;
+  z-index:3;
+  left:50%;
+  bottom:4%;
+  width:clamp(118px,13vw,168px);
+  height:clamp(150px,21vw,220px);
+  background-image:url('/assets/cat-back-v3.png');
+  background-repeat:no-repeat;
+  background-size:contain;
+  background-position:center bottom;
+  transform:translateX(-50%);
+  filter:drop-shadow(0 14px 18px rgba(23,24,58,.34));
+  pointer-events:none;
+  animation:center-cat-wander 12s ease-in-out infinite alternate;
+}
+.center-star-detail.center-world.cat-petting .center-world-cat-object {
+  animation:center-cat-respond 1.8s cubic-bezier(.22,.75,.25,1) both;
+}
+.center-star-detail.center-world.cat-playing .center-world-cat-object {
+  background-image:url('/assets/cat-walk-sprite-v2.png');
+  background-size:400% 100%;
+  background-position:0% 50%;
+  animation:center-cat-laser var(--cat-walk-duration, 5.2s) linear both,center-cat-walk-cycle 1.12s linear infinite;
+}
+.center-star-detail.center-world.cat-arrived .center-world-cat-object {
+  left:var(--cat-target-x, 50%);
+  background-image:url('/assets/cat-back-v3.png');
+  background-size:contain;
+  background-position:center bottom;
+  animation:center-cat-idle 3.4s ease-in-out infinite;
+}
+@keyframes center-cat-laser {
+  0% { left:var(--cat-start-x, 50%); bottom:4%; transform:translateX(-50%) translateY(0) scaleX(var(--cat-direction, 1)); }
+  84% { left:var(--cat-target-x); bottom:4%; transform:translateX(-50%) translateY(0) scaleX(var(--cat-direction, 1)); }
+  100% { left:var(--cat-target-x); bottom:4%; transform:translateX(-50%) translateY(0) scaleX(var(--cat-direction, 1)); }
+}
+@keyframes center-cat-walk-cycle {
+  0%,24.9% { background-position:0% 50%; }
+  25%,49.9% { background-position:33.333% 50%; }
+  50%,74.9% { background-position:66.667% 50%; }
+  75%,100% { background-position:100% 50%; }
+}
+@keyframes center-cat-idle {
+  0%,100% { transform:translateX(-50%) translateY(0) scale(1); }
+  50% { transform:translateX(-50%) translateY(-3px) scale(1.01); }
+}
+.center-star-detail.center-world.cat-grooming .center-world-cat-object {
+  left:var(--cat-target-x, 50%);
+  background-image:url('/assets/cat-groom-sprite-v1.png');
+  background-size:400% 100%;
+  background-position:0% 50%;
+  filter:brightness(.8) saturate(.76) hue-rotate(2deg) drop-shadow(0 14px 18px rgba(23,24,58,.34));
+  animation:center-cat-sprite-cycle 2.35s linear infinite;
+}
+.center-star-detail.center-world.cat-eating .center-world-cat-object {
+  left:calc(var(--cat-target-x, 73%) - 3%);
+  width:clamp(164px,16vw,214px);
+  height:clamp(155px,21vw,220px);
+  background-image:url('/assets/cat-eat-sprite-v1.png');
+  background-size:400% 100%;
+  background-position:0% 50%;
+  filter:brightness(.8) saturate(.76) hue-rotate(2deg) drop-shadow(0 14px 18px rgba(23,24,58,.34));
+  animation:center-cat-sprite-cycle 1.55s linear infinite;
+}
+@keyframes center-cat-sprite-cycle {
+  0%,24.9% { background-position:0% 50%; }
+  25%,49.9% { background-position:33.333% 50%; }
+  50%,74.9% { background-position:66.667% 50%; }
+  75%,100% { background-position:100% 50%; }
+}
+.center-food-bowl {
+  position:absolute;
+  z-index:5;
+  left:75%;
+  bottom:3.5%;
+  width:clamp(74px,8vw,108px);
+  aspect-ratio:1.34;
+  border:0;
+  background:url('/assets/star-food-bowl-v1.png') center / contain no-repeat;
+  cursor:pointer;
+  filter:drop-shadow(0 10px 16px rgba(24,24,58,.27));
+  transition:transform .45s var(--ease-soft),filter .45s var(--ease-soft);
+}
+.center-food-bowl::before {
+  content:'';
+  position:absolute;
+  left:25%;
+  top:30%;
+  width:50%;
+  height:24%;
+  border-radius:50%;
+  background:radial-gradient(circle at 18% 45%,#efbd77 0 9%,transparent 10%),radial-gradient(circle at 44% 63%,#c68451 0 10%,transparent 11%),radial-gradient(circle at 70% 38%,#e7ae69 0 9%,transparent 10%),radial-gradient(circle at 83% 67%,#b97048 0 8%,transparent 9%),rgba(78,48,37,.38);
+  opacity:0;
+  transform:scale(.7);
+  transition:opacity .55s var(--ease-soft),transform .55s var(--ease-soft);
+}
+.center-food-bowl.filled::before,
+.center-food-bowl.eating::before { opacity:1; transform:scale(1); }
+.center-food-bowl span {
+  position:absolute;
+  left:50%;
+  bottom:-28px;
+  transform:translate(-50%,5px);
+  padding:6px 10px;
+  border-radius:999px;
+  color:rgba(255,240,218,.78);
+  background:rgba(46,45,79,.34);
+  font-size:9px;
+  white-space:nowrap;
+  opacity:0;
+  transition:opacity .35s var(--ease-soft),transform .35s var(--ease-soft);
+  backdrop-filter:blur(8px);
+}
+.center-food-bowl:hover:not(:disabled),
+.center-food-bowl:focus-visible { transform:translateY(-4px) scale(1.04); filter:brightness(1.1) drop-shadow(0 0 22px rgba(255,206,157,.3)); }
+.center-food-bowl:hover span,
+.center-food-bowl:focus-visible span,
+.center-food-bowl.filled span,
+.center-food-bowl.eating span { opacity:1; transform:translate(-50%,0); }
+.center-food-bowl:disabled { cursor:default; }
+.center-food-bowl.eating { opacity:0; pointer-events:none; }
+.center-food-bowl:focus-visible { outline:1px solid rgba(255,236,204,.65); outline-offset:4px; }
+.center-cat-love {
+  position:absolute;
+  z-index:7;
+  left:var(--cat-target-x, 50%);
+  bottom:24%;
+  color:rgba(255,204,220,.78);
+  font-size:23px;
+  line-height:1;
+  text-shadow:0 0 14px rgba(255,173,205,.7);
+  pointer-events:none;
+  animation:center-cat-love 2.6s ease-out both;
+}
+.center-cat-love::before,
+.center-cat-love::after {
+  position:absolute;
+  content:'♥';
+  color:rgba(255,228,235,.54);
+  font-size:12px;
+}
+.center-cat-love::before { left:-13px; top:12px; animation:center-cat-love-small 2.25s .18s ease-out both; }
+.center-cat-love::after { left:16px; top:5px; animation:center-cat-love-small 2.35s .32s ease-out both; }
+@keyframes center-cat-love {
+  0% { opacity:0; transform:translate(-50%,8px) scale(.65); }
+  20% { opacity:.9; transform:translate(-50%,0) scale(1); }
+  100% { opacity:0; transform:translate(-50%,-45px) scale(1.12); }
+}
+@keyframes center-cat-love-small {
+  0% { opacity:0; transform:translateY(5px) scale(.65); }
+  25% { opacity:.7; transform:translateY(0) scale(1); }
+  100% { opacity:0; transform:translateY(-28px) scale(.9); }
+}
+@keyframes center-cat-respond {
+  0% { left:50%; bottom:4%; transform:translateX(-50%) translateY(0) rotate(0deg) scale(1); }
+  34% { left:47%; bottom:5.5%; transform:translateX(-50%) translateY(-3px) rotate(-2deg) scale(1.02); }
+  68% { left:53%; bottom:4.7%; transform:translateX(-50%) translateY(-1px) rotate(2deg) scale(1.01); }
+  100% { left:50%; bottom:4%; transform:translateX(-50%) translateY(0) rotate(0deg) scale(1); }
+}
+@keyframes center-cat-wander {
+  0% { left:45%; bottom:4%; transform:translateX(-50%) rotate(-1deg) scale(.96); }
+  28% { left:48%; bottom:5%; transform:translateX(-50%) rotate(1deg) scale(1); }
+  55% { left:54%; bottom:4.4%; transform:translateX(-50%) rotate(1deg) scale(1.02); }
+  78% { left:57%; bottom:5.3%; transform:translateX(-50%) rotate(-1deg) scale(.99); }
+  100% { left:52%; bottom:4%; transform:translateX(-50%) rotate(0deg) scale(1); }
+}
+.cat-laser-target {
+  position:absolute;
+  z-index:8;
+  width:26px;
+  height:26px;
+  margin:-13px 0 0 -13px;
+  border:1px solid rgba(255,226,165,.5);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,248,209,.98) 0 12%,rgba(255,203,128,.56) 24%,transparent 68%);
+  box-shadow:0 0 12px rgba(255,219,151,.82),0 0 28px rgba(255,184,128,.4);
+  animation:laser-target-pulse 2.4s var(--ease-soft) both;
+  pointer-events:none;
+}
+.cat-laser-target i { position:absolute; inset:0; display:grid; place-items:center; color:#fff3bf; font-size:10px; font-style:normal; text-shadow:0 0 8px #ffd18d; }
+@keyframes laser-target-pulse {
+  0% { opacity:0; transform:scale(.45); }
+  16% { opacity:1; transform:scale(1); }
+  74% { opacity:.82; transform:scale(.88); }
+  100% { opacity:0; transform:scale(.54); }
+}
+@media (max-width:760px) {
+  .center-star-detail.center-world .center-world-cat-object { width:112px; height:150px; bottom:5%; }
+}
